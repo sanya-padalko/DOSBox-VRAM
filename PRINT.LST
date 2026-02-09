@@ -1,0 +1,71 @@
+Turbo Assembler	 Version 4.1	    02/09/26 23:05:08	    Page 1
+print.asm
+
+
+
+      1	0000			     .model tiny
+      2	0000			     .code
+      3				     org 100h
+      4
+      5	0100  B8 B814		     start:	     mov ax, 0b814h
+      6	0103  8E C0				     mov es, ax
+      7
+      8	0105  BF 0000				     mov di, 0h
+      9	0108  BB 0125r				     mov bx, offset string
+     10	010B  8B F3				     mov si, bx
+     11	010D  B9 000E				     mov cx, 0eh
+     12
+     13	0110  8B 1C		     whilye:	     mov bx, ds:[si]
+     14	0112  46				     inc si
+     15
+     16	0113  26: 89 1D				     mov es:[di], bx
+     17	0116  47				     inc di
+     18	0117  B3 CE				     mov bl, 0ceh
+     19	0119  26: 88 1D				     mov es:[di], bl
+     20	011C  47				     inc di
+     21
+     22	011D  49				     dec cx
+     23	011E  75 F0				     jne whilye
+     24
+     25	0120  B8 4C00				     mov ax, 4c00h
+     26	0123  CD 21				     int 21h
+     27
+     28
+     29	0125  48 65 6C 6C 6F 2C	20+  string	     db	'Hello,	world',	'!!'
+     30	      77 6F 72 6C 64 21	21
+     31
+     32				     end start
+Turbo Assembler	 Version 4.1	    02/09/26 23:05:08	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "02/09/26"
+??FILENAME			  Text	 "print	  "
+??TIME				  Text	 "23:05:08"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 DGROUP
+@CODESIZE			  Text	 0
+@CPU				  Text	 0101H
+@CURSEG				  Text	 _TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 PRINT
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 1
+@STACK				  Text	 DGROUP
+@WORDSIZE			  Text	 2
+START				  Near	 DGROUP:0100
+STRING				  Byte	 DGROUP:0125
+WHILYE				  Near	 DGROUP:0110
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  _DATA				  16  0000 Word	  Public  DATA
+  _TEXT				  16  0133 Word	  Public  CODE
+
