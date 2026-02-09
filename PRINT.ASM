@@ -7,25 +7,26 @@ start:		mov ax, 0b814h
 
 		mov di, 0h
 		mov bx, offset string
-		mov si, bx
-		mov cx, 0eh		
+		mov si, bx		
 
-whilye:		mov bx, ds:[si]
+whilye:		mov bl, ds:[si]
+		mov cl, bl
 		inc si
 
-		mov es:[di], bx
+		xor cl, '$'
+		je end_whilye
+
+		mov es:[di], bl
 		inc di
 		mov bl, 0ceh
 		mov es:[di], bl
 		inc di
 
-		dec cx
-		jne whilye
+		jmp whilye
 
-		mov ax, 4c00h
+end_whilye:	mov ax, 4c00h
 		int 21h
 
-
-string 		db 'Hello, world', '!!'
-
+string 		db 'Hello, world', '!!', '$'
+	
 end start

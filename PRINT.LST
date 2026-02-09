@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    02/09/26 23:05:08	    Page 1
+Turbo Assembler	 Version 4.1	    02/09/26 23:13:32	    Page 1
 print.asm
 
 
@@ -11,31 +11,33 @@ print.asm
       6	0103  8E C0				     mov es, ax
       7
       8	0105  BF 0000				     mov di, 0h
-      9	0108  BB 0125r				     mov bx, offset string
+      9	0108  BB 0128r				     mov bx, offset string
      10	010B  8B F3				     mov si, bx
-     11	010D  B9 000E				     mov cx, 0eh
-     12
-     13	0110  8B 1C		     whilye:	     mov bx, ds:[si]
-     14	0112  46				     inc si
+     11
+     12	010D  8A 1C		     whilye:	     mov bl, ds:[si]
+     13	010F  8A CB				     mov cl, bl
+     14	0111  46				     inc si
      15
-     16	0113  26: 89 1D				     mov es:[di], bx
-     17	0116  47				     inc di
-     18	0117  B3 CE				     mov bl, 0ceh
-     19	0119  26: 88 1D				     mov es:[di], bl
-     20	011C  47				     inc di
-     21
-     22	011D  49				     dec cx
-     23	011E  75 F0				     jne whilye
+     16	0112  80 F1 24				     xor cl, '$'
+     17	0115  74 0C				     je	end_whilye
+     18
+     19	0117  26: 88 1D				     mov es:[di], bl
+     20	011A  47				     inc di
+     21	011B  B3 CE				     mov bl, 0ceh
+     22	011D  26: 88 1D				     mov es:[di], bl
+     23	0120  47				     inc di
      24
-     25	0120  B8 4C00				     mov ax, 4c00h
-     26	0123  CD 21				     int 21h
-     27
-     28
-     29	0125  48 65 6C 6C 6F 2C	20+  string	     db	'Hello,	world',	'!!'
-     30	      77 6F 72 6C 64 21	21
-     31
-     32				     end start
-Turbo Assembler	 Version 4.1	    02/09/26 23:05:08	    Page 2
+     25	0121  EB EA				     jmp whilye
+     26
+     27	0123  B8 4C00		     end_whilye:     mov ax, 4c00h
+     28	0126  CD 21				     int 21h
+     29
+     30	0128  48 65 6C 6C 6F 2C	20+  string	     db	'Hello,	world',	'!!', '$'
+     31	      77 6F 72 6C 64 21	21+
+     32	      24
+     33
+     34				     end start
+Turbo Assembler	 Version 4.1	    02/09/26 23:13:32	    Page 2
 Symbol Table
 
 
@@ -45,7 +47,7 @@ Symbol Name			  Type	 Value
 
 ??DATE				  Text	 "02/09/26"
 ??FILENAME			  Text	 "print	  "
-??TIME				  Text	 "23:05:08"
+??TIME				  Text	 "23:13:32"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
 @CODE				  Text	 DGROUP
@@ -59,13 +61,14 @@ Symbol Name			  Type	 Value
 @MODEL				  Text	 1
 @STACK				  Text	 DGROUP
 @WORDSIZE			  Text	 2
+END_WHILYE			  Near	 DGROUP:0123
 START				  Near	 DGROUP:0100
-STRING				  Byte	 DGROUP:0125
-WHILYE				  Near	 DGROUP:0110
+STRING				  Byte	 DGROUP:0128
+WHILYE				  Near	 DGROUP:010D
 
 Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  0133 Word	  Public  CODE
+  _TEXT				  16  0137 Word	  Public  CODE
 
