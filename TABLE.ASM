@@ -12,6 +12,7 @@ start:		mov ax, 0b814h
 
 		mov bx, 80h
 		mov cl, [bx]
+		sub cl, 1h
 		mov bx, 50h
 		mov ch, 0h
 		mov si, cx
@@ -52,7 +53,7 @@ hor_side:	mov al, 0c4h		; upside and dside
 		stosw
 
 		mov al, 0b3h		; lside and rside
-		mov si, 9Eh
+		mov si, 9Eh		; cnt bytes in string - 2
 		mov di, bx
 		add di, 2h
 		add di, si
@@ -90,10 +91,24 @@ hor_side:	mov al, 0c4h		; upside and dside
 		add di, dx
 		stosw
 
+		add si, 2h
+		mov di, bx
+		add di, si
+		add di, si
+		add di, 6h
+		mov bx, 82h
 		
+		mov ah, 0ceh
+		mov si, bx
+
+whilye:		lodsb			; print string
+		stosw
+
+		dec cl
+		jne whilye
 
 
-prog_end:	mov ax, 4c00h
+		mov ax, 4c00h
 		int 21h
 
 end start
