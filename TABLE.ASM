@@ -26,34 +26,72 @@ start:		mov ax, 0b814h
 		mov di, bx
 		stosw
 		
-		mov al, 0c4h		; upside
+		mov dx, 2h
+
+hor_side:	mov al, 0c4h		; upside and dside
 		mov di, bx		
 		add di, 2h		
 		mov si, cx		
 		add cx, 4h
-		rep stosw
-		mov cx, si		
+		cmp dx, 1h
+		jne notad
+		add di, 640d	
+	notad:	rep stosw
+		mov cx, si
+		dec dx
+		jne hor_side		
+
+		mov dx, cx		; dx saves 2 * hor_side_size
+		add dx, 4
+		sal dx, 1d
 
 		mov al, 0bfh		; ur_ang
 		mov di, bx
+		add di, dx
 		add di, 2h
-		mov si, cx
-		sal si, 1d
-		add si, 8h
-		add di, si
 		stosw
 
-		mov al, 0b3h		; lside
+		mov al, 0b3h		; lside and rside
 		mov si, 9Eh
 		mov di, bx
 		add di, 2h
 		add di, si
-		stosw
+		stosw			; first l wall
+		add di, dx
+		stosw			; first r wall
+		sub di, dx
+		sub di, 2h		
+		mov al, 0c3h
 		add di, si
-		stosw
+		stosw			; second l wall
+		mov al, 0b4h
+		add di, dx
+		stosw			; second r wall
+		sub di, dx
+		sub di, 2h
+		mov al, 0c4h
+		stosw			; l hor_line
+		add di, dx
+		sub di, 4h
+		stosw			; r hor_line
+		sub di, dx
 		add di, si
+		mov al, 0b3h
+		stosw			; third l wall
+		add di, dx
+		stosw			; third r wall
+
+		mov al, 0c0h		; ld_ang
+		mov di, bx
+		add di, 640d
 		stosw
+
+		mov al, 0d9h		; rd_ang		
+		add di, dx
+		stosw
+
 		
+
 
 prog_end:	mov ax, 4c00h
 		int 21h

@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    02/10/26 20:57:13	    Page 1
+Turbo Assembler	 Version 4.1	    02/10/26 24:13:17	    Page 1
 table.asm
 
 
@@ -31,45 +31,83 @@ table.asm
      26	012C  8B FB				     mov di, bx
      27	012E  AB				     stosw
      28
-     29	012F  B0 C4				     mov al, 0c4h	     ; upside
-     30	0131  8B FB				     mov di, bx
-     31	0133  83 C7 02				     add di, 2h
-     32	0136  8B F1				     mov si, cx
-     33	0138  83 C1 04				     add cx, 4h
-     34	013B  F3> AB				     rep stosw
-     35	013D  8B CE				     mov cx, si
-     36
-     37	013F  B0 BF				     mov al, 0bfh	     ; ur_ang
-     38	0141  8B FB				     mov di, bx
-     39	0143  83 C7 02				     add di, 2h
-     40	0146  8B F1				     mov si, cx
-     41	0148  D1 E6				     sal si, 1d
-     42	014A  83 C6 08				     add si, 8h
-     43	014D  03 FE				     add di, si
-     44	014F  AB				     stosw
-     45
-     46	0150  B0 B3				     mov al, 0b3h	     ; lside
-     47	0152  BE 009E				     mov si, 9Eh
-     48	0155  8B FB				     mov di, bx
-     49	0157  83 C7 02				     add di, 2h
-     50	015A  03 FE				     add di, si
-     51	015C  AB				     stosw
-     52	015D  03 FE				     add di, si
-     53	015F  AB				     stosw
-     54	0160  03 FE				     add di, si
-     55	0162  AB				     stosw
-     56
-     57
-Turbo Assembler	 Version 4.1	    02/10/26 20:57:13	    Page 2
+     29	012F  BA 0002				     mov dx, 2h
+     30
+     31	0132  B0 C4		     hor_side:	     mov al, 0c4h	     ; upside and dside
+     32	0134  8B FB				     mov di, bx
+     33	0136  83 C7 02				     add di, 2h
+     34	0139  8B F1				     mov si, cx
+     35	013B  83 C1 04				     add cx, 4h
+     36	013E  83 FA 01				     cmp dx, 1h
+     37	0141  75 04				     jne notad
+     38	0143  81 C7 0280			     add di, 640d
+     39	0147  F3> AB			     notad:  rep stosw
+     40	0149  8B CE				     mov cx, si
+     41	014B  4A				     dec dx
+     42	014C  75 E4				     jne hor_side
+     43
+     44	014E  8B D1				     mov dx, cx		     ; dx saves	2 * hor_side_size
+     45	0150  83 C2 04				     add dx, 4
+     46	0153  D1 E2				     sal dx, 1d
+     47
+     48	0155  B0 BF				     mov al, 0bfh	     ; ur_ang
+     49	0157  8B FB				     mov di, bx
+     50	0159  03 FA				     add di, dx
+     51	015B  83 C7 02				     add di, 2h
+     52	015E  AB				     stosw
+     53
+     54	015F  B0 B3				     mov al, 0b3h	     ; lside and rside
+     55	0161  BE 009E				     mov si, 9Eh
+     56	0164  8B FB				     mov di, bx
+     57	0166  83 C7 02				     add di, 2h
+Turbo Assembler	 Version 4.1	    02/10/26 24:13:17	    Page 2
 table.asm
 
 
 
-     58	0163  B8 4C00		     prog_end:	     mov ax, 4c00h
-     59	0166  CD 21				     int 21h
-     60
-     61				     end start
-Turbo Assembler	 Version 4.1	    02/10/26 20:57:13	    Page 3
+     58	0169  03 FE				     add di, si
+     59	016B  AB				     stosw		     ; first l wall
+     60	016C  03 FA				     add di, dx
+     61	016E  AB				     stosw		     ; first r wall
+     62	016F  2B FA				     sub di, dx
+     63	0171  83 EF 02				     sub di, 2h
+     64	0174  B0 C3				     mov al, 0c3h
+     65	0176  03 FE				     add di, si
+     66	0178  AB				     stosw		     ; second l	wall
+     67	0179  B0 B4				     mov al, 0b4h
+     68	017B  03 FA				     add di, dx
+     69	017D  AB				     stosw		     ; second r	wall
+     70	017E  2B FA				     sub di, dx
+     71	0180  83 EF 02				     sub di, 2h
+     72	0183  B0 C4				     mov al, 0c4h
+     73	0185  AB				     stosw		     ; l hor_line
+     74	0186  03 FA				     add di, dx
+     75	0188  83 EF 04				     sub di, 4h
+     76	018B  AB				     stosw		     ; r hor_line
+     77	018C  2B FA				     sub di, dx
+     78	018E  03 FE				     add di, si
+     79	0190  B0 B3				     mov al, 0b3h
+     80	0192  AB				     stosw		     ; third l wall
+     81	0193  03 FA				     add di, dx
+     82	0195  AB				     stosw		     ; third r wall
+     83
+     84	0196  B0 C0				     mov al, 0c0h	     ; ld_ang
+     85	0198  8B FB				     mov di, bx
+     86	019A  81 C7 0280			     add di, 640d
+     87	019E  AB				     stosw
+     88
+     89	019F  B0 D9				     mov al, 0d9h	     ; rd_ang
+     90	01A1  03 FA				     add di, dx
+     91	01A3  AB				     stosw
+     92
+     93
+     94
+     95
+     96	01A4  B8 4C00		     prog_end:	     mov ax, 4c00h
+     97	01A7  CD 21				     int 21h
+     98
+     99				     end start
+Turbo Assembler	 Version 4.1	    02/10/26 24:13:17	    Page 3
 Symbol Table
 
 
@@ -79,7 +117,7 @@ Symbol Name			  Type	 Value
 
 ??DATE				  Text	 "02/10/26"
 ??FILENAME			  Text	 "table	  "
-??TIME				  Text	 "20:57:13"
+??TIME				  Text	 "24:13:17"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
 @CODE				  Text	 DGROUP
@@ -93,12 +131,14 @@ Symbol Name			  Type	 Value
 @MODEL				  Text	 1
 @STACK				  Text	 DGROUP
 @WORDSIZE			  Text	 2
-PROG_END			  Near	 DGROUP:0163
+HOR_SIDE			  Near	 DGROUP:0132
+NOTAD				  Near	 DGROUP:0147
+PROG_END			  Near	 DGROUP:01A4
 START				  Near	 DGROUP:0100
 
 Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  0168 Word	  Public  CODE
+  _TEXT				  16  01A9 Word	  Public  CODE
 
