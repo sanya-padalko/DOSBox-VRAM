@@ -5,15 +5,10 @@ org 100h
 start:		mov ax, 0b81Eh
 		mov es, ax
 
-		mov ah, 0ah
-		mov dx, offset buffer
-		int 21h
-
-		inc dx
-		mov bx, dx
+		mov bx, 80h
 		mov cl, [bx]
-		inc dx
-		mov si, dx
+		inc bx
+		mov si, bx
 		xor di, di
 		
 		mov ah, 0ceh
