@@ -1,0 +1,71 @@
+Turbo Assembler	 Version 4.1	    02/10/26 11:37:07	    Page 1
+final.asm
+
+
+
+      1	0000			     .model tiny
+      2	0000			     .code
+      3				     org 100h
+      4
+      5	0100  B8 B81E		     start:	     mov ax, 0b81Eh
+      6	0103  8E C0				     mov es, ax
+      7
+      8	0105  B4 0A				     mov ah, 0ah
+      9	0107  BA 0123r				     mov dx, offset buffer
+     10	010A  CD 21				     int 21h
+     11
+     12	010C  42				     inc dx
+     13	010D  8B DA				     mov bx, dx
+     14	010F  8A 0F				     mov cl, [bx]
+     15	0111  42				     inc dx
+     16	0112  8B F2				     mov si, dx
+     17	0114  33 FF				     xor di, di
+     18
+     19	0116  B4 CE				     mov ah, 0ceh
+     20
+     21	0118  AC		     whilye:	     lodsb
+     22	0119  AB				     stosw
+     23
+     24	011A  FE C9				     dec cl
+     25	011C  75 FA				     jne whilye
+     26
+     27	011E  B8 4C00				     mov ax, 4c00h
+     28	0121  CD 21				     int 21h
+     29
+     30	0123  64 00 64*(00)	     buffer	     db	100d, 0h, 100d dup(0)
+     31
+     32				     end start
+Turbo Assembler	 Version 4.1	    02/10/26 11:37:07	    Page 2
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "02/10/26"
+??FILENAME			  Text	 "final	  "
+??TIME				  Text	 "11:37:07"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 DGROUP
+@CODESIZE			  Text	 0
+@CPU				  Text	 0101H
+@CURSEG				  Text	 _TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 FINAL
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 1
+@STACK				  Text	 DGROUP
+@WORDSIZE			  Text	 2
+BUFFER				  Byte	 DGROUP:0123
+START				  Near	 DGROUP:0100
+WHILYE				  Near	 DGROUP:0118
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  _DATA				  16  0000 Word	  Public  DATA
+  _TEXT				  16  0189 Word	  Public  CODE
+
