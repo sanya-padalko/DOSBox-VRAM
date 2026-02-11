@@ -23,7 +23,7 @@ start:		mov ax, 0b814h
 
 		mov ah, 8ah    ; color of table
 
-		mov al, 0dah    ; ul_ang
+		mov al, 02fh    ; ul_ang
 		mov di, bx
 		stosw
     
@@ -46,7 +46,7 @@ hor_side:	mov al, 0c4h    ; upside and dside
 		add dx, 4
 		sal dx, 1d
 		
-		mov al, 0bfh    ; ur_ang
+		mov al, 05ch    ; ur_ang
  		mov di, bx
 		add di, dx
 		add di, 2h
@@ -120,12 +120,12 @@ hor_side:	mov al, 0c4h    ; upside and dside
 
 		stosw      ; third r wall
 
-		mov al, 0c0h    ; ld_ang
+		mov al, 05ch    ; ld_ang
 		mov di, bx
 		add di, 640d
 		stosw
 
-		mov al, 0d9h    ; rd_ang    
+		mov al, 02fh    ; rd_ang    
 		add di, dx
 		stosw
 
