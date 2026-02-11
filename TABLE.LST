@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    02/10/26 24:33:10	    Page 1
+Turbo Assembler	 Version 4.1	    02/11/26 24:13:03	    Page 1
 table.asm
 
 
@@ -26,15 +26,15 @@ table.asm
      21	0126  2B DE				     sub bx, si
      22	0128  83 EB 06				     sub bx, 6h
      23
-     24	012B  B4 8E				     mov ah, 8eh	     ; color of	table
+     24	012B  B4 8A				     mov ah, 8ah    ; color of table
      25
-     26	012D  B0 DA				     mov al, 0dah	     ; ul_ang
+     26	012D  B0 DA				     mov al, 0dah    ; ul_ang
      27	012F  8B FB				     mov di, bx
      28	0131  AB				     stosw
      29
      30	0132  BA 0002				     mov dx, 2h
      31
-     32	0135  B0 C4		     hor_side:	     mov al, 0c4h	     ; upside and dside
+     32	0135  B0 C4		     hor_side:	     mov al, 0c4h    ; upside and dside
      33	0137  8B FB				     mov di, bx
      34	0139  83 C7 02				     add di, 2h
      35	013C  8B F1				     mov si, cx
@@ -47,82 +47,125 @@ table.asm
      42	014E  4A				     dec dx
      43	014F  75 E4				     jne hor_side
      44
-     45	0151  8B D1				     mov dx, cx		     ; dx saves	2 * hor_side_size
+     45	0151  8B D1				     mov dx, cx	   ; dx	saves 2	* hor_side_size
      46	0153  83 C2 04				     add dx, 4
      47	0156  D1 E2				     sal dx, 1d
      48
-     49	0158  B0 BF				     mov al, 0bfh	     ; ur_ang
+     49	0158  B0 BF				     mov al, 0bfh    ; ur_ang
      50	015A  8B FB				     mov di, bx
      51	015C  03 FA				     add di, dx
      52	015E  83 C7 02				     add di, 2h
      53	0161  AB				     stosw
      54
-     55	0162  B0 B3				     mov al, 0b3h	     ; lside and rside
-     56	0164  BE 009E				     mov si, 9Eh	     ; cnt bytes in string - 2
+     55	0162  B0 B3				     mov al, 0b3h    ; lside and rside
+     56	0164  BE 009E				     mov si, 9eh    ; cnt bytes	in string - 2
      57	0167  8B FB				     mov di, bx
-Turbo Assembler	 Version 4.1	    02/10/26 24:33:10	    Page 2
+Turbo Assembler	 Version 4.1	    02/11/26 24:13:03	    Page 2
 table.asm
 
 
 
      58	0169  83 C7 02				     add di, 2h
      59	016C  03 FE				     add di, si
-     60	016E  AB				     stosw		     ; first l wall
-     61	016F  03 FA				     add di, dx
-     62	0171  AB				     stosw		     ; first r wall
-     63	0172  2B FA				     sub di, dx
-     64	0174  83 EF 02				     sub di, 2h
-     65	0177  B0 C3				     mov al, 0c3h
-     66	0179  03 FE				     add di, si
-     67	017B  AB				     stosw		     ; second l	wall
-     68	017C  B0 B4				     mov al, 0b4h
-     69	017E  03 FA				     add di, dx
-     70	0180  AB				     stosw		     ; second r	wall
-     71	0181  2B FA				     sub di, dx
-     72	0183  83 EF 02				     sub di, 2h
-     73	0186  B0 C4				     mov al, 0c4h
-     74	0188  AB				     stosw		     ; l hor_line
-     75	0189  03 FA				     add di, dx
-     76	018B  83 EF 04				     sub di, 4h
-     77	018E  AB				     stosw		     ; r hor_line
-     78	018F  2B FA				     sub di, dx
-     79	0191  03 FE				     add di, si
-     80	0193  B0 B3				     mov al, 0b3h
-     81	0195  AB				     stosw		     ; third l wall
-     82	0196  03 FA				     add di, dx
-     83	0198  AB				     stosw		     ; third r wall
-     84
-     85	0199  B0 C0				     mov al, 0c0h	     ; ld_ang
-     86	019B  8B FB				     mov di, bx
-     87	019D  81 C7 0280			     add di, 640d
-     88	01A1  AB				     stosw
-     89
-     90	01A2  B0 D9				     mov al, 0d9h	     ; rd_ang
-     91	01A4  03 FA				     add di, dx
-     92	01A6  AB				     stosw
-     93
-     94	01A7  83 C6 02				     add si, 2h
-     95	01AA  8B FB				     mov di, bx
-     96	01AC  03 FE				     add di, si
-     97	01AE  03 FE				     add di, si
-     98	01B0  83 C7 06				     add di, 6h
-     99	01B3  BB 0082				     mov bx, 82h
-    100
-    101	01B6  B4 CE				     mov ah, 0ceh
-    102	01B8  8B F3				     mov si, bx
-    103
-    104	01BA  AC		     whilye:	     lodsb		     ; print string
-    105	01BB  AB				     stosw
-    106
-    107	01BC  FE C9				     dec cl
-    108	01BE  75 FA				     jne whilye
-    109
-    110
-    111	01C0  B8 4C00				     mov ax, 4c00h
-    112	01C3  CD 21				     int 21h
+     60	016E  AB				     stosw	; first	l wall
+     61
+     62	016F  B4 8C				     mov ah, 08ch
+     63	0171  B0 DA				     mov al, 0dah
+     64	0173  AB				     stosw
+     65
+     66	0174  B0 C4				     mov al, 0c4h
+     67	0176  8B F1				     mov si, cx
+     68	0178  8B CA				     mov cx, dx
+     69	017A  D1 E9				     shr cx, 1d
+     70	017C  83 E9 02				     sub cx, 2h
+     71	017F  F3> AB				     rep stosw
+     72	0181  8B CE				     mov cx, si
+     73
+     74	0183  B0 BF				     mov al, 0bfh
+     75	0185  AB				     stosw
+     76
+     77	0186  B0 B3				     mov al, 0b3h
+     78	0188  B4 8A				     mov ah, 8ah
+     79	018A  BE 009E				     mov si, 9eh
+     80
+     81	018D  AB				     stosw	; first	r wall
+     82	018E  2B FA				     sub di, dx
+     83	0190  83 EF 02				     sub di, 2h
+     84	0193  B0 C3				     mov al, 0c3h
+     85	0195  03 FE				     add di, si
+     86	0197  AB				     stosw	; second l wall
+     87	0198  B0 B4				     mov al, 0b4h
+     88	019A  03 FA				     add di, dx
+     89	019C  AB				     stosw	; second r wall
+     90	019D  2B FA				     sub di, dx
+     91	019F  83 EF 02				     sub di, 2h
+     92	01A2  B0 C4				     mov al, 0c4h
+     93	01A4  AB				     stosw	; l hor_line
+     94	01A5  03 FA				     add di, dx
+     95	01A7  83 EF 04				     sub di, 4h
+     96	01AA  AB				     stosw	; r hor_line
+     97	01AB  2B FA				     sub di, dx
+     98	01AD  03 FE				     add di, si
+     99	01AF  B0 B3				     mov al, 0b3h
+    100	01B1  AB				     stosw	; third	l wall
+    101
+    102	01B2  B4 8C				     mov ah, 08ch
+    103	01B4  B0 C0				     mov al, 0c0h
+    104	01B6  AB				     stosw
+    105
+    106	01B7  B0 C4				     mov al, 0c4h
+    107	01B9  8B F1				     mov si, cx
+    108	01BB  8B CA				     mov cx, dx
+    109	01BD  D1 E9				     shr cx, 1d
+    110	01BF  83 E9 02				     sub cx, 2h
+    111	01C2  F3> AB				     rep stosw
+    112	01C4  8B CE				     mov cx, si
     113
-    114				     end start
-Turbo Assembler	 Version 4.1	    02/10/26 24:33:10	    Page 3
+    114	01C6  B0 D9				     mov al, 0d9h
+Turbo Assembler	 Version 4.1	    02/11/26 24:13:03	    Page 3
+table.asm
+
+
+
+    115	01C8  AB				     stosw
+    116
+    117	01C9  B0 B3				     mov al, 0b3h
+    118	01CB  B4 8A				     mov ah, 8ah
+    119	01CD  BE 009E				     mov si, 9eh
+    120
+    121	01D0  AB				     stosw	; third	r wall
+    122
+    123	01D1  B0 C0				     mov al, 0c0h    ; ld_ang
+    124	01D3  8B FB				     mov di, bx
+    125	01D5  81 C7 0280			     add di, 640d
+    126	01D9  AB				     stosw
+    127
+    128	01DA  B0 D9				     mov al, 0d9h    ; rd_ang
+    129	01DC  03 FA				     add di, dx
+    130	01DE  AB				     stosw
+    131
+    132	01DF  83 C6 02				     add si, 2h
+    133	01E2  8B FB				     mov di, bx
+    134	01E4  03 FE				     add di, si
+    135	01E6  03 FE				     add di, si
+    136	01E8  83 C7 06				     add di, 6h
+    137	01EB  BB 0082				     mov bx, 82h
+    138
+    139	01EE  B4 8E				     mov ah, 08eh
+    140	01F0  8B F3				     mov si, bx
+    141
+    142	01F2  AC		     whilye:	     lodsb	; print	string
+    143	01F3  AB				     stosw
+    144
+    145	01F4  FE C9				     dec cl
+    146	01F6  75 FA				     jne whilye
+    147
+    148
+    149	01F8  B8 4C00				     mov ax, 4c00h
+    150	01FB  CD 21				     int 21h
+    151
+    152				     end start
+Turbo Assembler	 Version 4.1	    02/11/26 24:13:03	    Page 4
 Symbol Table
 
 
@@ -130,9 +173,9 @@ Symbol Table
 
 Symbol Name			  Type	 Value
 
-??DATE				  Text	 "02/10/26"
+??DATE				  Text	 "02/11/26"
 ??FILENAME			  Text	 "table	  "
-??TIME				  Text	 "24:33:10"
+??TIME				  Text	 "24:13:03"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
 @CODE				  Text	 DGROUP
@@ -149,11 +192,11 @@ Symbol Name			  Type	 Value
 HOR_SIDE			  Near	 DGROUP:0135
 NOTAD				  Near	 DGROUP:014A
 START				  Near	 DGROUP:0100
-WHILYE				  Near	 DGROUP:01BA
+WHILYE				  Near	 DGROUP:01F2
 
 Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  01C5 Word	  Public  CODE
+  _TEXT				  16  01FD Word	  Public  CODE
 

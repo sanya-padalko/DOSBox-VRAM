@@ -21,73 +21,111 @@ start:		mov ax, 0b814h
 		sub bx, si
 		sub bx, 6h
 
-		mov ah, 8eh		; color of table
+		mov ah, 8ah    ; color of table
 
-		mov al, 0dah		; ul_ang
+		mov al, 0dah    ; ul_ang
 		mov di, bx
 		stosw
-		
+    
 		mov dx, 2h
 
-hor_side:	mov al, 0c4h		; upside and dside
-		mov di, bx		
-		add di, 2h		
-		mov si, cx		
+hor_side:	mov al, 0c4h    ; upside and dside
+		mov di, bx    
+		add di, 2h    
+		mov si, cx    
 		add cx, 4h
 		cmp dx, 1h
 		jne notad
-		add di, 640d	
-	notad:	rep stosw
+		add di, 640d  
+	notad:  rep stosw
 		mov cx, si
 		dec dx
-		jne hor_side		
+		jne hor_side    
 
-		mov dx, cx		; dx saves 2 * hor_side_size
+		mov dx, cx    ; dx saves 2 * hor_side_size
 		add dx, 4
 		sal dx, 1d
-
-		mov al, 0bfh		; ur_ang
-		mov di, bx
+		
+		mov al, 0bfh    ; ur_ang
+ 		mov di, bx
 		add di, dx
 		add di, 2h
 		stosw
 
-		mov al, 0b3h		; lside and rside
-		mov si, 9Eh		; cnt bytes in string - 2
+		mov al, 0b3h    ; lside and rside
+		mov si, 9eh    ; cnt bytes in string - 2
 		mov di, bx
 		add di, 2h
 		add di, si
-		stosw			; first l wall
-		add di, dx
-		stosw			; first r wall
+		stosw      ; first l wall
+    
+		mov ah, 08ch
+		mov al, 0dah
+		stosw
+
+		mov al, 0c4h
+		mov si, cx
+		mov cx, dx
+		shr cx, 1d
+		sub cx, 2h
+		rep stosw
+		mov cx, si
+
+		mov al, 0bfh
+		stosw
+
+		mov al, 0b3h
+		mov ah, 8ah
+		mov si, 9eh
+
+		stosw      ; first r wall
 		sub di, dx
-		sub di, 2h		
+		sub di, 2h    
 		mov al, 0c3h
 		add di, si
-		stosw			; second l wall
+		stosw      ; second l wall
 		mov al, 0b4h
 		add di, dx
-		stosw			; second r wall
+		stosw      ; second r wall
 		sub di, dx
 		sub di, 2h
 		mov al, 0c4h
-		stosw			; l hor_line
+		stosw      ; l hor_line
 		add di, dx
 		sub di, 4h
-		stosw			; r hor_line
+		stosw      ; r hor_line
 		sub di, dx
 		add di, si
 		mov al, 0b3h
-		stosw			; third l wall
-		add di, dx
-		stosw			; third r wall
+		stosw      ; third l wall
+    
+		mov ah, 08ch
+		mov al, 0c0h
+		stosw
 
-		mov al, 0c0h		; ld_ang
+		mov al, 0c4h
+		mov si, cx
+		mov cx, dx
+		shr cx, 1d
+		sub cx, 2h
+		rep stosw
+		mov cx, si
+		
+		mov al, 0d9h
+		stosw
+
+		mov al, 0b3h
+    		mov ah, 8ah
+		mov si, 9eh
+
+		stosw      ; third r wall
+
+		mov al, 0c0h    ; ld_ang
 		mov di, bx
 		add di, 640d
 		stosw
 
-		mov al, 0d9h		; rd_ang		
+		mov al, 0d9h    ; rd_ang    
 		add di, dx
 		stosw
 
@@ -97,14 +135,14 @@ hor_side:	mov al, 0c4h		; upside and dside
 		add di, si
 		add di, 6h
 		mov bx, 82h
-		
-		mov ah, 0ceh
+    
+		mov ah, 08eh
 		mov si, bx
 
-whilye:		lodsb			; print string
+whilye:		lodsb      ; print string
 		stosw
 
-		dec cl
+ 		dec cl
 		jne whilye
 
 
