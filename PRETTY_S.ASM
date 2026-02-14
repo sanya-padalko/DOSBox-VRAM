@@ -22,13 +22,12 @@ Main		proc
 		mov di, 6h 
 		call PrintString
 
-		push di
-		push 0ah
 		push 0ce03h
-		call DrawHorLine
-		pop di
-		pop di
-		pop di
+		push 0ce05h
+		push 0907h
+		push 0ah
+		push di
+		call BoundedHorLine
 
 		ret
 		endp
@@ -62,9 +61,12 @@ SkipStrings	proc
 ;		[82h-...] = string
 ;		AH 	  = color of string's symbols
 ;		ES:[DI]   = index of memory, from which printing will start
+;
 ; Result:	print string from command line (without first space) 
 ;		started from es:[di]
+;
 ; Expected:	STRING ISN'T EMPTY and not too long ( < 126d symbols)
+;
 ; Destruction:	DI, SI, AL, CL, BX
 ;=====================================================
 PrintString	proc
@@ -88,14 +90,74 @@ PrintString	proc
 
 
 ;=====================================================
-; Entry:	symb = symbol which will be printing
-;		len = len of line
-;		ind = index of memory, from which hor line will be drawing
+; BoundedHorLine(lbound, rbound, symb, len, ind)
+;
+; Entry:	lbound	= symbol for line's start
+;		rbound	= symbol for line's end
+;		symb	= symbol of line's middle
+;		len	= len of line's middle
+;		ind	= index from which line will be printing (es:[ind])
+;
+; Result:	di	= ind
+;		AX	= returing address
+;		CX	= 0
+;
+; Expected:	argument direction -> Pascal, len >= 0
+;
+; Destruction:	AX, CX, DI
+;=====================================================
+BoundedHorLine	proc
+
+		push bp
+		mov bp, sp
+
+		mov di, [bp + 4]
+		mov cx, [bp + 6]
+		mov ax, [bp + 12]
+		
+		stosw
+		
+		mov ax, [bp + 8]
+		
+		push di
+		push cx
+		push ax
+		call DrawHorLine
+
+		mov ax, [bp + 10]
+		stosw
+
+		pop di
+		pop di
+		pop di
+		
+		sub di, 2d
+		
+		pop bp
+		pop ax
+		add sp, 5h * 2h
+		push ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; DrawHorLine(symb, len, ind)
+;
+; Entry:	symb	= symbol which will be printing
+;		len	= len of line
+;		ind	= index of memory, from which hor line will be drawing
 ;		(real index = es:[ind])
-; Result:
-; Expected: 	before returning adress in stack will be bp and before it will
-;		be arguments	
-; Destruction:	AX, BX, CX, DI
+;
+; Result:	ES:[DI]	= index of first byte after horisontal line
+;		CX	= 0
+;		AX	= symb
+;
+; Expected: 	argument direction -> CDECL, len >= 0
+;
+; Destruction:	AX, CX, DI
 ;=====================================================
 DrawHorLine	proc symb, len, ind
 
