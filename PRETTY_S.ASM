@@ -21,20 +21,21 @@ Main		proc
 		mov ax, 02h
 		call SkipStrings
 
-		call GetLength
-		call CalcOffset
-
-		mov ax, -1h
-		call ChangeString
-
-		add cl, 2d
-
-		push 8a2fh			; upside
-		push 8a5ch
+		mov ax, 8a2fh
+		mov bx, 8a5ch
+		mov cx, bx
+		mov dx, ax
 		push 8ac4h
-		push cx
-		push di
-		call BoundedHorLine
+		push 8a03h
+		call DrawHorLines
+		
+		mov ax, -3d
+		call ChangeString
+		
+		mov ax, 8ab3h
+		mov bx, 8ac3h
+		mov cx, 8ab4h
+		call DrawWalls
 
 		ret
 		endp
@@ -74,6 +75,7 @@ SkipStrings	proc
 ChangeString	proc
 
 		push bx
+		push dx
 		mov bx, 10d
 		mul bx
 		
@@ -81,6 +83,7 @@ ChangeString	proc
 		add ax, bx
 		mov es, ax
 
+		pop dx
 		pop bx
 		ret
 		endp
@@ -165,6 +168,118 @@ GetLength	proc
 
 
 ;=====================================================
+; Entry:	AX = wall's symbol
+;		BX = left central wall's symbol
+;		CX = right central wall's symbol
+;
+; Result:	DX = CX
+;		SI = AX
+;
+; Expected:	DI = right offset
+;
+; Distruction:	DX, SI
+;=====================================================
+DrawWalls	proc
+		mov dx, cx
+		mov si, bx
+		call GetLength
+		add cl, 2d
+		sal cx, 1d
+
+		mov bx, si
+		mov si, ax
+		
+		stosw
+		add di, cx
+		stosw
+		sub di, cx
+		sub di, 4d
+
+		mov ax, 1d
+		call ChangeString
+		
+		mov ax, bx
+		stosw
+		add di, cx
+		mov ax, dx
+		stosw
+		sub di, cx
+		sub di, 4d
+
+		mov ax, 1d
+		call ChangeString
+		
+		mov ax, si
+		stosw
+		add di, cx
+		stosw
+		sub di, cx
+		sub di, 4d
+
+		mov cx, dx
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	AX = symbol of upleft angle
+;		BX = symbol of upright angle
+;		CX = symbol of downleft angle
+;		DX = symbol of downright angle
+;
+; Result:	AX = returning address
+;		BX = 80h
+;		SI = CX
+;		DI = right offset
+;
+; Expected:	- 
+;
+; Destruction:	AX, BX, SI, DI
+;=====================================================
+DrawHorLines	proc	mid1, mid2
+		push bp
+		mov bp, sp
+
+		mov si, cx
+
+		push ax
+		push bx
+		push mid1
+		call GetLength
+		call CalcOffset
+		add cl, 2d
+		push cx
+		push di
+		call BoundedHorLine
+
+		call GetLength
+		add cl, 2
+		
+		mov ax, 04h
+		call ChangeString
+		
+		push si
+		push dx
+		push mid2
+		push cx
+		push di
+		call BoundedHorLine
+		
+		mov cx, si
+		pop bp	
+		pop ax
+		add sp, 4d
+		push ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
 ; BoundedHorLine(lbound, rbound, symb, len, ind)
 ;
 ; Entry:	lbound	= symbol for line's start
@@ -179,7 +294,7 @@ GetLength	proc
 ;
 ; Expected:	argument direction -> Pascal, len >= 0
 ;
-; Destruction:	AX, CX, DI
+; Destruction:	AX, CX
 ;=====================================================
 BoundedHorLine	proc
 
