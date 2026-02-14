@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    02/14/26 26:08:16	    Page 1
+Turbo Assembler	 Version 4.1	    02/14/26 26:34:10	    Page 1
 pretty_s.asm
 
 
@@ -12,417 +12,463 @@ pretty_s.asm
       7				     locals @@
       8
       9	0100  E8 0003		     start:	     call Main
-     10	0103  E8 0129				     call Exit
+     10	0103  E8 018C				     call Exit
      11
      12
      13				     ;=====================================================
      14				     ; Entry:	     -
-     15				     ; Result:	     Program executed
-     16				     ; Expected:     -
-     17				     ; Destruction:  AX, BX, ES, DI, DS, SI, CL
-     18				     ;=====================================================
-     19	0106			     Main	     proc
-     20
-     21	0106  B8 0002				     mov ax, 02h
-     22	0109  E8 0034				     call SkipStrings
+     15				     ;
+     16				     ; Result:	     Program executed
+     17				     ;
+     18				     ; Expected:     -
+     19				     ;
+     20				     ; Destruction:  AX, BX, ES, DI, DS, SI, CL
+     21				     ;=====================================================
+     22	0106			     Main	     proc
      23
-     24	010C  B8 8A2F				     mov ax, 8a2fh
-     25	010F  BB 8A5C				     mov bx, 8a5ch
-     26	0112  8B CB				     mov cx, bx
-     27	0114  8B D0				     mov dx, ax
-     28	0116  50 55 8B EC C7 46	02+		     push 8ac4h
-     29	      8AC4 5D
-     30	0120  50 55 8B EC C7 46	02+		     push 8a03h
-     31	      8A03 5D
-     32	012A  E8 0094				     call DrawHorLines
-     33
-     34	012D  B8 FFFD				     mov ax, -3d
-     35	0130  E8 001B				     call ChangeString
+     24	0106  B8 0002				     mov ax, 02h
+     25	0109  E8 0089				     call SkipStrings
+     26
+     27	010C  B8 8A2F				     mov ax, 8a2fh
+     28	010F  BB 8A5C				     mov bx, 8a5ch
+     29	0112  8B CB				     mov cx, bx
+     30	0114  8B D0				     mov dx, ax
+     31	0116  50 55 8B EC C7 46	02+		     push 8ac4h
+     32	      8AC4 5D
+     33	0120  50 55 8B EC C7 46	02+		     push 8a03h
+     34	      8A03 5D
+     35	012A  E8 00F1				     call DrawHorLines
      36
-     37	0133  B8 8AB3				     mov ax, 8ab3h
-     38	0136  BB 8AC3				     mov bx, 8ac3h
-     39	0139  B9 8AB4				     mov cx, 8ab4h
-     40	013C  E8 0042				     call DrawWalls
-     41
-     42	013F  C3				     ret
-     43	0140					     endp
-     44				     ;-----------------------------------------------------
-     45
-     46
-     47
-     48				     ;=====================================================
-     49				     ; Entry:	     AX	= count	of empty string	before frame
-     50				     ; Result:	     ES	on begin of (AX	+ 1)th string
-     51				     ; Expected:     1 < AX < 21, also expect that 2 string will be entered
-     52				     ; Destruction:  AX, ES, BX
-     53				     ;=====================================================
-     54	0140			     SkipStrings     proc
-     55
-     56	0140  05 0002				     add ax, 02h
-     57	0143  BB 000A				     mov bx, 0ah
-Turbo Assembler	 Version 4.1	    02/14/26 26:08:16	    Page 2
+     37	012D  B8 0001				     mov ax, 1d
+     38	0130  E8 0070				     call ChangeString
+     39
+     40	0133  B8 8AB3				     mov ax, 8ab3h
+     41	0136  BB 8AC3				     mov bx, 8ac3h
+     42	0139  B9 8AB4				     mov cx, 8ab4h
+     43	013C  E8 0097				     call DrawWalls
+     44
+     45	013F  E8 008C				     call GetLength
+     46	0142  83 C7 02				     add di, 2d
+     47	0145  50 55 8B EC C7 46	02+		     push 8cdah
+     48	      8CDA 5D
+     49	014F  50 55 8B EC C7 46	02+		     push 8cbfh
+     50	      8CBF 5D
+     51	0159  50 55 8B EC C7 46	02+		     push 8cc4h
+     52	      8CC4 5D
+     53	0163  51				     push cx
+     54	0164  57				     push di
+     55	0165  E8 00F3				     call BoundedHorLine
+     56
+     57	0168  B8 0002				     mov ax, 2d
+Turbo Assembler	 Version 4.1	    02/14/26 26:34:10	    Page 2
 pretty_s.asm
 
 
 
-     58	0146  F7 E3				     mul bx
-     59	0148  05 B800				     add ax, 0b800h
-     60	014B  8E C0				     mov es, ax
-     61
-     62	014D  C3				     ret
-     63	014E					     endp
-     64				     ;-----------------------------------------------------
-     65
-     66
-     67
-     68				     ;=====================================================
-     69				     ; Entry:	     AX	= the number of	lines to change	to
-     70				     ;		     ES	= ...
-     71				     ; Result:	     ES	= old ES + AX strings
-     72				     ;		     AX	= ES
-     73				     ; Expected:     -
-     74				     ;
-     75				     ; Destruction:  ES, AX
-     76				     ;=====================================================
-     77	014E			     ChangeString    proc
-     78
-     79	014E  53				     push bx
-     80	014F  52				     push dx
-     81	0150  BB 000A				     mov bx, 10d
-     82	0153  F7 E3				     mul bx
-     83
-     84	0155  8C C3				     mov bx, es
-     85	0157  03 C3				     add ax, bx
-     86	0159  8E C0				     mov es, ax
+     58	016B  E8 0035				     call ChangeString
+     59
+     60	016E  E8 005D				     call GetLength
+     61	0171  50 55 8B EC C7 46	02+		     push 8cc0h
+     62	      8CC0 5D
+     63	017B  50 55 8B EC C7 46	02+		     push 8cd9h
+     64	      8CD9 5D
+     65	0185  50 55 8B EC C7 46	02+		     push 8cc4h
+     66	      8CC4 5D
+     67	018F  51				     push cx
+     68	0190  57				     push di
+     69	0191  E8 00C7				     call BoundedHorLine
+     70
+     71	0194  C3				     ret
+     72	0195					     endp
+     73				     ;-----------------------------------------------------
+     74
+     75
+     76
+     77				     ;=====================================================
+     78				     ; Entry:	     AX	= count	of empty string	before frame
+     79				     ;
+     80				     ; Result:	     ES	on begin of (AX	+ 1)th string
+     81				     ;
+     82				     ; Expected:     1 < AX < 21, also expect that 2 string will be entered
+     83				     ;
+     84				     ; Destruction:  AX, ES, BX
+     85				     ;=====================================================
+     86	0195			     SkipStrings     proc
      87
-     88	015B  5A				     pop dx
-     89	015C  5B				     pop bx
-     90	015D  C3				     ret
-     91	015E					     endp
-     92				     ;-----------------------------------------------------
+     88	0195  05 0002				     add ax, 02h
+     89	0198  BB 000A				     mov bx, 0ah
+     90	019B  F7 E3				     mul bx
+     91	019D  05 B800				     add ax, 0b800h
+     92	01A0  8E C0				     mov es, ax
      93
-     94
-     95
-     96				     ;=====================================================
-     97				     ; Entry:	     CX	= length of string
-     98				     ;
-     99				     ; Result:	     DI	= right	offset for string with len CX
-    100				     ;
-    101				     ; Expected:     0 <= CX < 76d
-    102				     ;
-    103				     ; Destruction:  DI
-    104				     ;=====================================================
-    105	015E			     CalcOffset	     proc
-    106
-    107	015E  BF 004C				     mov di, 76d
-    108	0161  2B F9				     sub di, cx
-    109	0163  D1 EF D1 EF			     shr di, 2d
-    110	0167  D1 E7				     sal di, 1d
-    111
-    112	0169  C3				     ret
-    113	016A					     endp
-    114				     ;-----------------------------------------------------
-Turbo Assembler	 Version 4.1	    02/14/26 26:08:16	    Page 3
+     94	01A2  C3				     ret
+     95	01A3					     endp
+     96				     ;-----------------------------------------------------
+     97
+     98
+     99
+    100				     ;=====================================================
+    101				     ; Entry:	     AX	= the number of	lines to change	to
+    102				     ;		     ES	= ...
+    103				     ; Result:	     ES	= old ES + AX strings
+    104				     ;		     AX	= ES
+    105				     ; Expected:     -
+    106				     ;
+    107				     ; Destruction:  ES, AX
+    108				     ;=====================================================
+    109	01A3			     ChangeString    proc
+    110
+    111	01A3  53				     push bx
+    112	01A4  52				     push dx
+    113	01A5  BB 000A				     mov bx, 10d
+    114	01A8  F7 E3				     mul bx
+Turbo Assembler	 Version 4.1	    02/14/26 26:34:10	    Page 3
 pretty_s.asm
 
 
 
     115
-    116
-    117
-    118				     ;=====================================================
-    119				     ; Entry:	     [80h]     = lenght	of string
-    120				     ;		     [81h]     = space
-    121				     ;		     [82h-...] = string
-    122				     ;		     AH	       = color of string's symbols
-    123				     ;		     ES:[DI]   = index of memory, from which printing will start
-    124				     ;
-    125				     ; Result:	     print string from command line (without first space)
-    126				     ;		     started from es:[di]
-    127				     ;
-    128				     ; Expected:     STRING ISN'T EMPTY	and not	too long ( < 126d symbols)
-    129				     ;
-    130				     ; Destruction:  DI, SI, AL, CX, BX
-    131				     ;=====================================================
-    132	016A			     PrintString     proc
-    133
-    134	016A  E8 000C				     call GetLength
-    135	016D  83 C3 02				     add bx, 02h
-    136	0170  8B F3				     mov si, bx
-    137
-    138	0172  AC			    @@print: lodsb
-    139	0173  AB				     stosw
-    140
-    141	0174  FE C9				     dec cl
-    142	0176  75 FA				     jne @@print
+    116	01AA  8C C3				     mov bx, es
+    117	01AC  03 C3				     add ax, bx
+    118	01AE  8E C0				     mov es, ax
+    119
+    120	01B0  5A				     pop dx
+    121	01B1  5B				     pop bx
+    122	01B2  C3				     ret
+    123	01B3					     endp
+    124				     ;-----------------------------------------------------
+    125
+    126
+    127
+    128				     ;=====================================================
+    129				     ; Entry:	     CX	= length of string
+    130				     ;
+    131				     ; Result:	     DI	= right	offset for string with len CX
+    132				     ;
+    133				     ; Expected:     0 <= CX < 76d
+    134				     ;
+    135				     ; Destruction:  DI
+    136				     ;=====================================================
+    137	01B3			     CalcOffset	     proc
+    138
+    139	01B3  BF 004C				     mov di, 76d
+    140	01B6  2B F9				     sub di, cx
+    141	01B8  D1 EF D1 EF			     shr di, 2d
+    142	01BC  D1 E7				     sal di, 1d
     143
-    144	0178  C3				     ret
-    145	0179					     endp
+    144	01BE  C3				     ret
+    145	01BF					     endp
     146				     ;-----------------------------------------------------
     147
     148
     149
     150				     ;=====================================================
-    151				     ; Entry:	     [80h] = length of string
-    152				     ;
-    153				     ; Result:	     CX	= length of string
-    154				     ;		     BX	= 80h
-    155				     ;
-    156				     ; Expected:     -
-    157				     ;
-    158				     ; Destruction:  BX, CX
-    159				     ;=====================================================
-    160	0179			     GetLength	     proc
-    161
-    162	0179  BB 0080				     mov bx, 80h
-    163	017C  8A 0F				     mov cl, [bx]
-    164	017E  B5 00				     mov ch, 0h
+    151				     ; Entry:	     [80h]     = lenght	of string
+    152				     ;		     [81h]     = space
+    153				     ;		     [82h-...] = string
+    154				     ;		     AH	       = color of string's symbols
+    155				     ;		     ES:[DI]   = index of memory, from which printing will start
+    156				     ;
+    157				     ; Result:	     print string from command line (without first space)
+    158				     ;		     started from es:[di]
+    159				     ;
+    160				     ; Expected:     STRING ISN'T EMPTY	and not	too long ( < 126d symbols)
+    161				     ;
+    162				     ; Destruction:  DI, SI, AL, CX, BX
+    163				     ;=====================================================
+    164	01BF			     PrintString     proc
     165
-    166	0180  C3				     ret
-    167	0181					     endp
-    168				     ;-----------------------------------------------------
+    166	01BF  E8 000C				     call GetLength
+    167	01C2  83 C3 02				     add bx, 02h
+    168	01C5  8B F3				     mov si, bx
     169
-    170
-    171
-Turbo Assembler	 Version 4.1	    02/14/26 26:08:16	    Page 4
+    170	01C7  AC			    @@print: lodsb
+    171	01C8  AB				     stosw
+Turbo Assembler	 Version 4.1	    02/14/26 26:34:10	    Page 4
 pretty_s.asm
 
 
 
-    172				     ;=====================================================
-    173				     ; Entry:	     AX	= wall's symbol
-    174				     ;		     BX	= left central wall's symbol
-    175				     ;		     CX	= right	central	wall's symbol
-    176				     ;
-    177				     ; Result:	     DX	= CX
-    178				     ;		     SI	= AX
-    179				     ;
-    180				     ; Expected:     DI	= right	offset
-    181				     ;
-    182				     ; Distruction:  DX, SI
-    183				     ;=====================================================
-    184	0181			     DrawWalls	     proc
-    185	0181  8B D1				     mov dx, cx
-    186	0183  8B F3				     mov si, bx
-    187	0185  E8 FFF1				     call GetLength
-    188	0188  80 C1 02				     add cl, 2d
-    189	018B  D1 E1				     sal cx, 1d
-    190
-    191	018D  8B DE				     mov bx, si
-    192	018F  8B F0				     mov si, ax
+    172
+    173	01C9  FE C9				     dec cl
+    174	01CB  75 FA				     jne @@print
+    175
+    176	01CD  C3				     ret
+    177	01CE					     endp
+    178				     ;-----------------------------------------------------
+    179
+    180
+    181
+    182				     ;=====================================================
+    183				     ; Entry:	     [80h] = length of string
+    184				     ;
+    185				     ; Result:	     CX	= length of string
+    186				     ;		     BX	= 80h
+    187				     ;
+    188				     ; Expected:     -
+    189				     ;
+    190				     ; Destruction:  BX, CX
+    191				     ;=====================================================
+    192	01CE			     GetLength	     proc
     193
-    194	0191  AB				     stosw
-    195	0192  03 F9				     add di, cx
-    196	0194  AB				     stosw
-    197	0195  2B F9				     sub di, cx
-    198	0197  83 EF 04				     sub di, 4d
-    199
-    200	019A  B8 0001				     mov ax, 1d
-    201	019D  E8 FFAE				     call ChangeString
+    194	01CE  BB 0080				     mov bx, 80h
+    195	01D1  8A 0F				     mov cl, [bx]
+    196	01D3  B5 00				     mov ch, 0h
+    197
+    198	01D5  C3				     ret
+    199	01D6					     endp
+    200				     ;-----------------------------------------------------
+    201
     202
-    203	01A0  8B C3				     mov ax, bx
-    204	01A2  AB				     stosw
-    205	01A3  03 F9				     add di, cx
-    206	01A5  8B C2				     mov ax, dx
-    207	01A7  AB				     stosw
-    208	01A8  2B F9				     sub di, cx
-    209	01AA  83 EF 04				     sub di, 4d
-    210
-    211	01AD  B8 0001				     mov ax, 1d
-    212	01B0  E8 FF9B				     call ChangeString
-    213
-    214	01B3  8B C6				     mov ax, si
-    215	01B5  AB				     stosw
-    216	01B6  03 F9				     add di, cx
-    217	01B8  AB				     stosw
-    218	01B9  2B F9				     sub di, cx
-    219	01BB  83 EF 04				     sub di, 4d
-    220
-    221	01BE  8B CA				     mov cx, dx
+    203
+    204				     ;=====================================================
+    205				     ; Entry:	     AX	= wall's symbol
+    206				     ;		     BX	= left central wall's symbol
+    207				     ;		     CX	= right	central	wall's symbol
+    208				     ;
+    209				     ; Result:	     DX	= CX
+    210				     ;		     SI	= AX
+    211				     ;
+    212				     ; Expected:     DI	= right	offset
+    213				     ;
+    214				     ; Distruction:  DX, SI
+    215				     ;=====================================================
+    216	01D6			     DrawWalls	     proc
+    217	01D6  8B D1				     mov dx, cx
+    218	01D8  8B F3				     mov si, bx
+    219	01DA  E8 FFF1				     call GetLength
+    220	01DD  80 C1 02				     add cl, 2d
+    221	01E0  D1 E1				     sal cx, 1d
     222
-    223	01C0  C3				     ret
-    224	01C1					     endp
-    225				     ;-----------------------------------------------------
-    226
-    227
-    228
-Turbo Assembler	 Version 4.1	    02/14/26 26:08:16	    Page 5
+    223	01E2  8B DE				     mov bx, si
+    224	01E4  8B F0				     mov si, ax
+    225
+    226	01E6  AB				     stosw
+    227	01E7  03 F9				     add di, cx
+    228	01E9  AB				     stosw
+Turbo Assembler	 Version 4.1	    02/14/26 26:34:10	    Page 5
 pretty_s.asm
 
 
 
-    229				     ;=====================================================
-    230				     ; Entry:	     AX	= symbol of upleft angle
-    231				     ;		     BX	= symbol of upright angle
-    232				     ;		     CX	= symbol of downleft angle
-    233				     ;		     DX	= symbol of downright angle
-    234				     ;
-    235				     ; Result:	     AX	= returning address
-    236				     ;		     BX	= 80h
-    237				     ;		     SI	= CX
-    238				     ;		     DI	= right	offset
-    239				     ;
-    240				     ; Expected:     -
-    241				     ;
-    242				     ; Destruction:  AX, BX, SI, DI
-    243				     ;=====================================================
-    244	01C1			     DrawHorLines    proc    mid1, mid2
-    245	01C1  55				     push bp
-    246	01C2  8B EC				     mov bp, sp
-    247
-    248	01C4  8B F1				     mov si, cx
-    249
-    250	01C6  50				     push ax
-    251	01C7  53				     push bx
-    252	01C8  FF 76 04				     push mid1
-    253	01CB  E8 FFAB				     call GetLength
-    254	01CE  E8 FF8D				     call CalcOffset
-    255	01D1  80 C1 02				     add cl, 2d
-    256	01D4  51				     push cx
-    257	01D5  57				     push di
-    258	01D6  E8 001F				     call BoundedHorLine
-    259
-    260	01D9  E8 FF9D				     call GetLength
-    261	01DC  80 C1 02				     add cl, 2
+    229	01EA  2B F9				     sub di, cx
+    230	01EC  83 EF 04				     sub di, 4d
+    231
+    232	01EF  B8 0001				     mov ax, 1d
+    233	01F2  E8 FFAE				     call ChangeString
+    234
+    235	01F5  8B C3				     mov ax, bx
+    236	01F7  AB				     stosw
+    237	01F8  03 F9				     add di, cx
+    238	01FA  8B C2				     mov ax, dx
+    239	01FC  AB				     stosw
+    240	01FD  2B F9				     sub di, cx
+    241	01FF  83 EF 04				     sub di, 4d
+    242
+    243	0202  B8 0001				     mov ax, 1d
+    244	0205  E8 FF9B				     call ChangeString
+    245
+    246	0208  8B C6				     mov ax, si
+    247	020A  AB				     stosw
+    248	020B  03 F9				     add di, cx
+    249	020D  AB				     stosw
+    250	020E  2B F9				     sub di, cx
+    251	0210  83 EF 04				     sub di, 4d
+    252
+    253	0213  8B CA				     mov cx, dx
+    254
+    255	0215  B8 FFFE				     mov ax, -2d
+    256	0218  E8 FF88				     call ChangeString
+    257	021B  8B C6				     mov ax, si
+    258
+    259	021D  C3				     ret
+    260	021E					     endp
+    261				     ;-----------------------------------------------------
     262
-    263	01DF  B8 0004				     mov ax, 04h
-    264	01E2  E8 FF69				     call ChangeString
-    265
-    266	01E5  56				     push si
-    267	01E6  52				     push dx
-    268	01E7  FF 76 06				     push mid2
-    269	01EA  51				     push cx
-    270	01EB  57				     push di
-    271	01EC  E8 0009				     call BoundedHorLine
-    272
-    273	01EF  8B CE				     mov cx, si
-    274	01F1  5D				     pop bp
-    275	01F2  58				     pop ax
-    276	01F3  83 C4 04				     add sp, 4d
-    277	01F6  50				     push ax
-    278	01F7  C3				     ret
-    279	01F8					     endp
-    280				     ;-----------------------------------------------------
-    281
-    282
-    283
-    284				     ;=====================================================
-    285				     ; BoundedHorLine(lbound, rbound, symb, len, ind)
-Turbo Assembler	 Version 4.1	    02/14/26 26:08:16	    Page 6
+    263
+    264
+    265				     ;=====================================================
+    266				     ; Entry:	     AX	     = symbol of upleft	angle
+    267				     ;		     BX	     = symbol of upright angle
+    268				     ;		     CX	     = symbol of downleft angle
+    269				     ;		     DX	     = symbol of downright angle
+    270				     ;	     [stack] mid1    = symbol of middle	of upside
+    271				     ;	     [stack] mid2    = symbol of middle	of downside
+    272				     ;
+    273				     ; Result:	     AX	= returning address
+    274				     ;		     BX	= 80h
+    275				     ;		     SI	= CX
+    276				     ;		     DI	= right	offset
+    277				     ;
+    278				     ; Expected:     argument's	direction -> Pascal
+    279				     ;
+    280				     ; Destruction:  AX, BX, SI, DI
+    281				     ;=====================================================
+    282	021E			     DrawHorLines    proc    mid1, mid2
+    283	021E  55				     push bp
+    284	021F  8B EC				     mov bp, sp
+    285
+Turbo Assembler	 Version 4.1	    02/14/26 26:34:10	    Page 6
 pretty_s.asm
 
 
 
-    286				     ;
-    287				     ; Entry:	     lbound  = symbol for line's start
-    288				     ;		     rbound  = symbol for line's end
-    289				     ;		     symb    = symbol of line's	middle
-    290				     ;		     len     = len of line's middle
-    291				     ;		     ind     = index from which	line will be printing (es:[ind])
-    292				     ;
-    293				     ; Result:	     di	     = ind
-    294				     ;		     AX	     = returing	address
-    295				     ;		     CX	     = 0
-    296				     ;
-    297				     ; Expected:     argument direction	-> Pascal, len >= 0
-    298				     ;
-    299				     ; Destruction:  AX, CX
-    300				     ;=====================================================
-    301	01F8			     BoundedHorLine  proc
-    302
-    303	01F8  55				     push bp
-    304	01F9  8B EC				     mov bp, sp
-    305
-    306	01FB  8B 7E 04				     mov di, [bp + 4]
-    307	01FE  8B 4E 06				     mov cx, [bp + 6]
-    308	0201  8B 46 0C				     mov ax, [bp + 12]
-    309
-    310	0204  AB				     stosw
-    311
-    312	0205  8B 46 08				     mov ax, [bp + 8]
+    286	0221  8B F1				     mov si, cx
+    287
+    288	0223  50				     push ax
+    289	0224  53				     push bx
+    290	0225  FF 76 04				     push mid1
+    291	0228  E8 FFA3				     call GetLength
+    292	022B  E8 FF85				     call CalcOffset
+    293	022E  80 C1 02				     add cl, 2d
+    294	0231  51				     push cx
+    295	0232  57				     push di
+    296	0233  E8 0025				     call BoundedHorLine
+    297
+    298	0236  E8 FF95				     call GetLength
+    299	0239  80 C1 02				     add cl, 2
+    300
+    301	023C  B8 0004				     mov ax, 04h
+    302	023F  E8 FF61				     call ChangeString
+    303
+    304	0242  56				     push si
+    305	0243  52				     push dx
+    306	0244  FF 76 06				     push mid2
+    307	0247  51				     push cx
+    308	0248  57				     push di
+    309	0249  E8 000F				     call BoundedHorLine
+    310
+    311	024C  B8 FFFC				     mov ax, -4d
+    312	024F  E8 FF51				     call ChangeString
     313
-    314	0208  57				     push di
-    315	0209  51				     push cx
-    316	020A  50				     push ax
-    317	020B  E8 0011				     call DrawHorLine
-    318
-    319	020E  8B 46 0A				     mov ax, [bp + 10]
-    320	0211  AB				     stosw
-    321
-    322	0212  5F				     pop di
-    323	0213  5F				     pop di
-    324	0214  5F				     pop di
-    325
-    326	0215  83 EF 02				     sub di, 2d
-    327
-    328	0218  5D				     pop bp
-    329	0219  58				     pop ax
-    330	021A  83 C4 0A				     add sp, 5h	* 2h
-    331	021D  50				     push ax
-    332	021E  C3				     ret
-    333	021F					     endp
-    334				     ;-----------------------------------------------------
-    335
-    336
-    337
-    338				     ;=====================================================
-    339				     ; DrawHorLine(symb, len, ind)
-    340				     ;
-    341				     ; Entry:	     symb    = symbol which will be printing
-    342				     ;		     len     = len of line
-Turbo Assembler	 Version 4.1	    02/14/26 26:08:16	    Page 7
+    314	0252  8B CE				     mov cx, si
+    315	0254  5D				     pop bp
+    316	0255  58				     pop ax
+    317	0256  83 C4 04				     add sp, 4d
+    318	0259  50				     push ax
+    319	025A  C3				     ret
+    320	025B					     endp
+    321				     ;-----------------------------------------------------
+    322
+    323
+    324
+    325				     ;=====================================================
+    326				     ; BoundedHorLine(lbound, rbound, symb, len, ind)
+    327				     ;
+    328				     ; Entry:[stack] lbound  = symbol for line's start
+    329				     ;	     [stack] rbound  = symbol for line's end
+    330				     ;	     [stack] symb    = symbol of line's	middle
+    331				     ;	     [stack] len     = len of line's middle
+    332				     ;	     [stack] ind     = index from which	line will be printing (es:[ind])
+    333				     ;
+    334				     ; Result:	     DI	     = ind
+    335				     ;		     AX	     = returing	address
+    336				     ;		     CX	     = 0
+    337				     ;
+    338				     ; Expected:     argument's	direction -> Pascal, len >= 0
+    339				     ;
+    340				     ; Destruction:  AX, CX
+    341				     ;=====================================================
+    342	025B			     BoundedHorLine  proc
+Turbo Assembler	 Version 4.1	    02/14/26 26:34:10	    Page 7
 pretty_s.asm
 
 
 
-    343				     ;		     ind     = index of	memory,	from which hor line will be drawing
-    344				     ;		     (real index = es:[ind])
-    345				     ;
-    346				     ; Result:	     ES:[DI] = index of	first byte after horisontal line
-    347				     ;		     CX	     = 0
-    348				     ;		     AX	     = symb
-    349				     ;
-    350				     ; Expected:     argument direction	-> CDECL, len >= 0
-    351				     ;
-    352				     ; Destruction:  AX, CX, DI
-    353				     ;=====================================================
-    354	021F			     DrawHorLine     proc symb,	len, ind
-    355
-    356	021F  55				     push bp
-    357	0220  8B EC				     mov bp, sp
-    358
-    359	0222  8B 46 04				     mov ax, symb
-    360	0225  8B 4E 06				     mov cx, len
-    361	0228  8B 7E 08				     mov di, ind
+    343
+    344	025B  55				     push bp
+    345	025C  8B EC				     mov bp, sp
+    346
+    347	025E  8B 7E 04				     mov di, [bp + 4]
+    348	0261  8B 4E 06				     mov cx, [bp + 6]
+    349	0264  8B 46 0C				     mov ax, [bp + 12]
+    350
+    351	0267  AB				     stosw
+    352
+    353	0268  8B 46 08				     mov ax, [bp + 8]
+    354
+    355	026B  57				     push di
+    356	026C  51				     push cx
+    357	026D  50				     push ax
+    358	026E  E8 0011				     call DrawHorLine
+    359
+    360	0271  8B 46 0A				     mov ax, [bp + 10]
+    361	0274  AB				     stosw
     362
-    363	022B  F3> AB				     rep stosw
-    364
-    365	022D  5D				     pop bp
-    366	022E  C3				     ret
-    367	022F					     endp
-    368				     ;-----------------------------------------------------
-    369
-    370
-    371
-    372				     ;=====================================================
-    373				     ; Entry:	     -
-    374				     ; Result:	     Program ended
-    375				     ; Expected:     -
-    376				     ; Destruction:  AX
-    377				     ;=====================================================
-    378	022F			     Exit	     proc
-    379
-    380	022F  B8 4C00				     mov ax, 4c00h
-    381	0232  CD 21				     int 21h
-    382
-    383	0234  C3				     ret
-    384	0235					     endp
-    385				     ;-----------------------------------------------------
-    386
-    387
-    388
-    389				     end start
-Turbo Assembler	 Version 4.1	    02/14/26 26:08:16	    Page 8
+    363	0275  5F				     pop di
+    364	0276  5F				     pop di
+    365	0277  5F				     pop di
+    366
+    367	0278  83 EF 02				     sub di, 2d
+    368
+    369	027B  5D				     pop bp
+    370	027C  58				     pop ax
+    371	027D  83 C4 0A				     add sp, 5h	* 2h
+    372	0280  50				     push ax
+    373	0281  C3				     ret
+    374	0282					     endp
+    375				     ;-----------------------------------------------------
+    376
+    377
+    378
+    379				     ;=====================================================
+    380				     ; DrawHorLine(symb, len, ind)
+    381				     ;
+    382				     ; Entry:[stack] symb    = symbol which will be printing
+    383				     ;	     [stack] len     = len of line
+    384				     ;	     [stack] ind     = index of	memory,	from which hor line will be drawing
+    385				     ;		     (real index = es:[ind])
+    386				     ;
+    387				     ; Result:	     ES:[DI] = index of	first byte after horisontal line
+    388				     ;		     CX	     = 0
+    389				     ;		     AX	     = symb
+    390				     ;
+    391				     ; Expected:     argument direction	-> CDECL, len >= 0
+    392				     ;
+    393				     ; Destruction:  AX, CX, DI
+    394				     ;=====================================================
+    395	0282			     DrawHorLine     proc symb,	len, ind
+    396
+    397	0282  55				     push bp
+    398	0283  8B EC				     mov bp, sp
+    399
+Turbo Assembler	 Version 4.1	    02/14/26 26:34:10	    Page 8
+pretty_s.asm
+
+
+
+    400	0285  8B 46 04				     mov ax, symb
+    401	0288  8B 4E 06				     mov cx, len
+    402	028B  8B 7E 08				     mov di, ind
+    403
+    404	028E  F3> AB				     rep stosw
+    405
+    406	0290  5D				     pop bp
+    407	0291  C3				     ret
+    408	0292					     endp
+    409				     ;-----------------------------------------------------
+    410
+    411
+    412
+    413				     ;=====================================================
+    414				     ; Entry:	     -
+    415				     ; Result:	     Program ended
+    416				     ; Expected:     -
+    417				     ; Destruction:  AX
+    418				     ;=====================================================
+    419	0292			     Exit	     proc
+    420
+    421	0292  B8 4C00				     mov ax, 4c00h
+    422	0295  CD 21				     int 21h
+    423
+    424	0297  C3				     ret
+    425	0298					     endp
+    426				     ;-----------------------------------------------------
+    427
+    428
+    429
+    430				     end start
+Turbo Assembler	 Version 4.1	    02/14/26 26:34:10	    Page 9
 Symbol Table
 
 
@@ -432,10 +478,10 @@ Symbol Name			  Type	 Value
 
 ??DATE				  Text	 "02/14/26"
 ??FILENAME			  Text	 "pretty_s"
-??TIME				  Text	 "26:08:15"
+??TIME				  Text	 "26:34:10"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
-@@PRINT				  Near	 DGROUP:0172
+@@PRINT				  Near	 DGROUP:01C7
 @CODE				  Text	 DGROUP
 @CODESIZE			  Text	 0
 @CPU				  Text	 0101H
@@ -447,21 +493,21 @@ Symbol Name			  Type	 Value
 @MODEL				  Text	 1
 @STACK				  Text	 DGROUP
 @WORDSIZE			  Text	 2
-BOUNDEDHORLINE			  Near	 DGROUP:01F8
-CALCOFFSET			  Near	 DGROUP:015E
-CHANGESTRING			  Near	 DGROUP:014E
-DRAWHORLINE			  Near	 DGROUP:021F
-DRAWHORLINES			  Near	 DGROUP:01C1
-DRAWWALLS			  Near	 DGROUP:0181
-EXIT				  Near	 DGROUP:022F
-GETLENGTH			  Near	 DGROUP:0179
+BOUNDEDHORLINE			  Near	 DGROUP:025B
+CALCOFFSET			  Near	 DGROUP:01B3
+CHANGESTRING			  Near	 DGROUP:01A3
+DRAWHORLINE			  Near	 DGROUP:0282
+DRAWHORLINES			  Near	 DGROUP:021E
+DRAWWALLS			  Near	 DGROUP:01D6
+EXIT				  Near	 DGROUP:0292
+GETLENGTH			  Near	 DGROUP:01CE
 IND				  Number [DGROUP:BP+0008]
 LEN				  Number [DGROUP:BP+0006]
 MAIN				  Near	 DGROUP:0106
 MID1				  Number [DGROUP:BP+0004]
 MID2				  Number [DGROUP:BP+0006]
-PRINTSTRING			  Near	 DGROUP:016A
-SKIPSTRINGS			  Near	 DGROUP:0140
+PRINTSTRING			  Near	 DGROUP:01BF
+SKIPSTRINGS			  Near	 DGROUP:0195
 START				  Near	 DGROUP:0100
 STR_LENGTH			  Number 000A
 SYMB				  Number [DGROUP:BP+0004]
@@ -470,5 +516,5 @@ Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  0235 Word	  Public  CODE
+  _TEXT				  16  0298 Word	  Public  CODE
 

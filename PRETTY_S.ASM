@@ -12,8 +12,11 @@ start: 		call Main
 
 ;=====================================================
 ; Entry:	-
+;
 ; Result:	Program executed
+;
 ; Expected:	-
+;
 ; Destruction:	AX, BX, ES, DI, DS, SI, CL
 ;=====================================================
 Main		proc
@@ -29,13 +32,33 @@ Main		proc
 		push 8a03h
 		call DrawHorLines
 		
-		mov ax, -3d
+		mov ax, 1d
 		call ChangeString
-		
+
 		mov ax, 8ab3h
 		mov bx, 8ac3h
 		mov cx, 8ab4h
 		call DrawWalls
+
+		call GetLength
+		add di, 2d
+		push 8cdah
+		push 8cbfh
+		push 8cc4h
+		push cx
+		push di
+		call BoundedHorLine
+
+		mov ax, 2d
+		call ChangeString
+
+		call GetLength
+		push 8cc0h
+		push 8cd9h
+		push 8cc4h
+		push cx
+		push di
+		call BoundedHorLine
 
 		ret
 		endp
@@ -45,8 +68,11 @@ Main		proc
 
 ;=====================================================
 ; Entry:	AX = count of empty string before frame
+;
 ; Result:	ES on begin of (AX + 1)th string
+;
 ; Expected:	1 < AX < 21, also expect that 2 string will be entered
+;
 ; Destruction:	AX, ES, BX
 ;=====================================================
 SkipStrings	proc
@@ -217,6 +243,10 @@ DrawWalls	proc
 		sub di, 4d
 
 		mov cx, dx
+		
+		mov ax, -2d
+		call ChangeString
+		mov ax, si
 
 		ret
 		endp
@@ -225,17 +255,19 @@ DrawWalls	proc
 
 
 ;=====================================================
-; Entry:	AX = symbol of upleft angle
-;		BX = symbol of upright angle
-;		CX = symbol of downleft angle
-;		DX = symbol of downright angle
+; Entry:	AX 	= symbol of upleft angle
+;		BX 	= symbol of upright angle
+;		CX 	= symbol of downleft angle
+;		DX 	= symbol of downright angle
+;	[stack]	mid1	= symbol of middle of upside 
+;	[stack]	mid2	= symbol of middle of downside
 ;
 ; Result:	AX = returning address
 ;		BX = 80h
 ;		SI = CX
 ;		DI = right offset
 ;
-; Expected:	- 
+; Expected:	argument's direction -> Pascal
 ;
 ; Destruction:	AX, BX, SI, DI
 ;=====================================================
@@ -268,6 +300,9 @@ DrawHorLines	proc	mid1, mid2
 		push di
 		call BoundedHorLine
 		
+		mov ax, -4d
+		call ChangeString
+
 		mov cx, si
 		pop bp	
 		pop ax
@@ -282,17 +317,17 @@ DrawHorLines	proc	mid1, mid2
 ;=====================================================
 ; BoundedHorLine(lbound, rbound, symb, len, ind)
 ;
-; Entry:	lbound	= symbol for line's start
-;		rbound	= symbol for line's end
-;		symb	= symbol of line's middle
-;		len	= len of line's middle
-;		ind	= index from which line will be printing (es:[ind])
+; Entry:[stack]	lbound	= symbol for line's start
+;	[stack]	rbound	= symbol for line's end
+;	[stack]	symb	= symbol of line's middle
+;	[stack]	len	= len of line's middle
+;	[stack]	ind	= index from which line will be printing (es:[ind])
 ;
-; Result:	di	= ind
+; Result:	DI	= ind
 ;		AX	= returing address
 ;		CX	= 0
 ;
-; Expected:	argument direction -> Pascal, len >= 0
+; Expected:	argument's direction -> Pascal, len >= 0
 ;
 ; Destruction:	AX, CX
 ;=====================================================
@@ -336,9 +371,9 @@ BoundedHorLine	proc
 ;=====================================================
 ; DrawHorLine(symb, len, ind)
 ;
-; Entry:	symb	= symbol which will be printing
-;		len	= len of line
-;		ind	= index of memory, from which hor line will be drawing
+; Entry:[stack]	symb	= symbol which will be printing
+;	[stack]	len	= len of line
+;	[stack]	ind	= index of memory, from which hor line will be drawing
 ;		(real index = es:[ind])
 ;
 ; Result:	ES:[DI]	= index of first byte after horisontal line
