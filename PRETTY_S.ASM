@@ -18,11 +18,14 @@ start: 		call Main
 ;=====================================================
 Main		proc
 
-		mov ax, 0ch
+		mov ax, 02h
 		call SkipStrings
 
 		call GetLength
 		call CalcOffset
+
+		mov ax, -1h
+		call ChangeString
 
 		add cl, 2d
 
@@ -53,6 +56,32 @@ SkipStrings	proc
 		add ax, 0b800h
 		mov es, ax		
 
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	AX = the number of lines to change to
+;		ES = ...
+; Result: 	ES = old ES + AX strings
+;		AX = ES
+; Expected:	-
+;
+; Destruction:	ES, AX
+;=====================================================
+ChangeString	proc
+
+		push bx
+		mov bx, 10d
+		mul bx
+		
+		mov bx, es
+		add ax, bx
+		mov es, ax
+
+		pop bx
 		ret
 		endp
 ;-----------------------------------------------------
