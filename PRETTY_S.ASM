@@ -2,6 +2,8 @@
 .code
 org 100h
 
+STR_LENGTH	equ 10d
+
 locals @@
 
 start: 		call Main
@@ -16,16 +18,18 @@ start: 		call Main
 ;=====================================================
 Main		proc
 
-		mov ax, 05h
+		mov ax, 0ch
 		call SkipStrings
 
-		mov di, 6h 
-		call PrintString
+		call GetLength
+		call CalcOffset
 
-		push 0ce03h
-		push 0ce05h
-		push 0907h
-		push 0ah
+		add cl, 2d
+
+		push 8a2fh			; upside
+		push 8a5ch
+		push 8ac4h
+		push cx
 		push di
 		call BoundedHorLine
 
@@ -56,6 +60,28 @@ SkipStrings	proc
 
 
 ;=====================================================
+; Entry:	CX = length of string
+;
+; Result:	DI = right offset for string with len CX
+;
+; Expected:	0 <= CX < 76d
+;
+; Destruction:	DI
+;=====================================================
+CalcOffset	proc
+		
+		mov di, 76d
+		sub di, cx
+		shr di, 2d
+		sal di, 1d
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
 ; Entry:	[80h]     = lenght of string
 ;		[81h]     = space
 ;		[82h-...] = string
@@ -67,13 +93,11 @@ SkipStrings	proc
 ;
 ; Expected:	STRING ISN'T EMPTY and not too long ( < 126d symbols)
 ;
-; Destruction:	DI, SI, AL, CL, BX
+; Destruction:	DI, SI, AL, CX, BX
 ;=====================================================
 PrintString	proc
 
-		mov bx, 80h
-		mov cl, [bx]
-		dec cl
+		call GetLength
 		add bx, 02h
 		mov si, bx
 
@@ -83,6 +107,28 @@ PrintString	proc
 		dec cl
 		jne @@print
 
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry: 	[80h] = length of string
+;
+; Result:	CX = length of string
+;		BX = 80h
+;
+; Expected: 	-
+;
+; Destruction:	BX, CX
+;=====================================================
+GetLength	proc
+
+		mov bx, 80h
+		mov cl, [bx]
+		mov ch, 0h
+		
 		ret
 		endp
 ;-----------------------------------------------------
