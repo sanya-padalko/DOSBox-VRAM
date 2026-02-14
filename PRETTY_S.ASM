@@ -60,6 +60,18 @@ Main		proc
 		push di
 		call BoundedHorLine
 
+		mov ax, -1d
+		call ChangeString
+
+		mov ax, 8ac4h
+		stosw
+		
+		mov ah, 0ceh
+		call PrintString
+
+		mov ax, 8ac4h
+		stosw
+
 		ret
 		endp
 ;-----------------------------------------------------
@@ -186,6 +198,7 @@ GetLength	proc
 		mov bx, 80h
 		mov cl, [bx]
 		mov ch, 0h
+		dec cl
 		
 		ret
 		endp
