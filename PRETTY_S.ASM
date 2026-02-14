@@ -2,23 +2,25 @@
 .code
 org 100h
 
+locals @@
+
 start: 		call Main
 		call Exit
+
 
 ;=====================================================
 ; Entry:	-
 ; Result:	Program executed
 ; Expected:	-
-; Destruction:	AX
+; Destruction:	AX, BX, ES, DI, DS, SI, CL
 ;=====================================================
 Main		proc
 
 		mov ax, 05h
 		call SkipStrings
 
-		mov bx, 0h
-		mov es:[bx], 03h
-		mov es:[bx + 1], 0ceh
+		mov bx, 3h
+		call PrintString
 
 		ret
 		endp
@@ -44,19 +46,39 @@ SkipStrings	proc
 		endp
 ;-----------------------------------------------------
 
+
+
 ;=====================================================
 ; Entry:	[80h]     = lenght of string
 ;		[81h]     = space
 ;		[82h-...] = string
-; Result:	string from command line (without first space) will be printed
+;		AH 	  = color of string's symbols
+;		BX 	  = count of columns, will be skipped before printing
+; Result:	print string from command line (without first space) 
+;		started from es:[bx]
 ; Expected:	STRING ISN'T EMPTY and not too long ( < 126d symbols)
-; Destruction:	ES, DI, DS, SI, AX, CX, BX
+; Destruction:	ES, DI, DS, SI, AL, CL, BX
 ;=====================================================
 PrintString	proc
+
+		mov di, bx
+		sal di, 1d
+		mov bx, 80h
+		mov cl, [bx]
+		dec cl
+		add bx, 02h
+		mov si, bx
+
+       @@print:	lodsb
+		stosw
+
+		dec cl
+		jne @@print
 
 		ret
 		endp
 ;-----------------------------------------------------
+
 
 
 ;=====================================================
