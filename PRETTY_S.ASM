@@ -19,8 +19,16 @@ Main		proc
 		mov ax, 05h
 		call SkipStrings
 
-		mov bx, 3h
+		mov di, 6h 
 		call PrintString
+
+		push di
+		push 0ah
+		push 0ce03h
+		call DrawHorLine
+		pop di
+		pop di
+		pop di
 
 		ret
 		endp
@@ -53,16 +61,14 @@ SkipStrings	proc
 ;		[81h]     = space
 ;		[82h-...] = string
 ;		AH 	  = color of string's symbols
-;		BX 	  = count of columns, will be skipped before printing
+;		ES:[DI]   = index of memory, from which printing will start
 ; Result:	print string from command line (without first space) 
-;		started from es:[bx]
+;		started from es:[di]
 ; Expected:	STRING ISN'T EMPTY and not too long ( < 126d symbols)
-; Destruction:	ES, DI, DS, SI, AL, CL, BX
+; Destruction:	DI, SI, AL, CL, BX
 ;=====================================================
 PrintString	proc
 
-		mov di, bx
-		sal di, 1d
 		mov bx, 80h
 		mov cl, [bx]
 		dec cl
@@ -75,6 +81,34 @@ PrintString	proc
 		dec cl
 		jne @@print
 
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	symb = symbol which will be printing
+;		len = len of line
+;		ind = index of memory, from which hor line will be drawing
+;		(real index = es:[ind])
+; Result:
+; Expected: 	before returning adress in stack will be bp and before it will
+;		be arguments	
+; Destruction:	AX, BX, CX, DI
+;=====================================================
+DrawHorLine	proc symb, len, ind
+
+		push bp
+		mov bp, sp
+
+		mov ax, symb
+		mov cx, len
+		mov di, ind
+
+		rep stosw
+
+		pop bp
 		ret
 		endp
 ;-----------------------------------------------------
