@@ -1,0 +1,120 @@
+Turbo Assembler	 Version 4.1	    02/14/26 16:56:56	    Page 1
+pretty_s.asm
+
+
+
+      1	0000			     .model tiny
+      2	0000			     .code
+      3				     org 100h
+      4
+      5	0100  E8 0003		     start:	     call Main
+      6	0103  E8 0023				     call Exit
+      7
+      8				     ;=====================================================
+      9				     ; Entry:	     -
+     10				     ; Result:	     Program executed
+     11				     ; Expected:     -
+     12				     ; Destruction:  AX
+     13				     ;=====================================================
+     14	0106			     Main	     proc
+     15
+     16	0106  B8 0005				     mov ax, 05h
+     17	0109  E8 000F				     call SkipStrings
+     18
+     19	010C  BB 0000				     mov bx, 0h
+     20	010F  26: C7 07	0003			     mov es:[bx], 03h
+*Warning* pretty_s.asm(20) Argument needs type override
+     21	0114  26: C7 47	01 00CE			     mov es:[bx	+ 1], 0ceh
+*Warning* pretty_s.asm(21) Argument needs type override
+     22
+     23	011A  C3				     ret
+     24	011B					     endp
+     25				     ;-----------------------------------------------------
+     26
+     27
+     28
+     29				     ;=====================================================
+     30				     ; Entry:	     AX	= count	of empty string	before frame
+     31				     ; Result:	     ES	on begin of (AX	+ 1)th string
+     32				     ; Expected:     1 < AX < 21, also expect that 2 string will be entered
+     33				     ; Destruction:  AX, ES, BX
+     34				     ;=====================================================
+     35	011B			     SkipStrings     proc
+     36
+     37	011B  05 0002				     add ax, 02h
+     38	011E  BB 000A				     mov bx, 0ah
+     39	0121  F7 E3				     mul bx
+     40	0123  05 B800				     add ax, 0b800h
+     41	0126  8E C0				     mov es, ax
+     42
+     43	0128  C3				     ret
+     44	0129					     endp
+     45				     ;-----------------------------------------------------
+     46
+     47
+     48
+     49				     ;=====================================================
+     50				     ; Entry:	     -
+     51				     ; Result:	     Program ended
+     52				     ; Expected:     -
+     53				     ; Destruction:  AX
+     54				     ;=====================================================
+     55	0129			     Exit	     proc
+Turbo Assembler	 Version 4.1	    02/14/26 16:56:56	    Page 2
+pretty_s.asm
+
+
+
+     56
+     57	0129  B8 4C00				     mov ax, 4c00h
+     58	012C  CD 21				     int 21h
+     59
+     60	012E  C3				     ret
+     61	012F					     endp
+     62				     ;-----------------------------------------------------
+     63
+     64
+     65
+     66				     end start
+Turbo Assembler	 Version 4.1	    02/14/26 16:56:56	    Page 3
+Symbol Table
+
+
+
+
+Symbol Name			  Type	 Value
+
+??DATE				  Text	 "02/14/26"
+??FILENAME			  Text	 "pretty_s"
+??TIME				  Text	 "16:56:56"
+??VERSION			  Number 040A
+@32BIT				  Text	 0
+@CODE				  Text	 DGROUP
+@CODESIZE			  Text	 0
+@CPU				  Text	 0101H
+@CURSEG				  Text	 _TEXT
+@DATA				  Text	 DGROUP
+@DATASIZE			  Text	 0
+@FILENAME			  Text	 PRETTY_S
+@INTERFACE			  Text	 000H
+@MODEL				  Text	 1
+@STACK				  Text	 DGROUP
+@WORDSIZE			  Text	 2
+EXIT				  Near	 DGROUP:0129
+MAIN				  Near	 DGROUP:0106
+SKIPSTRINGS			  Near	 DGROUP:011B
+START				  Near	 DGROUP:0100
+
+Groups & Segments		  Bit Size Align  Combine Class
+
+DGROUP				  Group
+  _DATA				  16  0000 Word	  Public  DATA
+  _TEXT				  16  012F Word	  Public  CODE
+Turbo Assembler	 Version 4.1	    02/14/26 16:56:56	    Page 4
+Error Summary
+
+
+
+*Warning* pretty_s.asm(20) Argument needs type override
+*Warning* pretty_s.asm(21) Argument needs type override
+
