@@ -3,12 +3,23 @@
 org 100h
 
 STR_BEF_FRAME	equ 0ah
-
 SYMB_OFFSET	equ 2d
 
 STR_COLOR	equ 09eh
 STR_LBOUND	equ 8ac4h
 STR_RBOUND	equ 8ac4h
+
+FRAME_UP_SYMB	equ 8a03h
+FRAME_DN_SYMB	equ 8ac4h
+
+UPLEFT_ANGLE	equ 8a2fh
+UPRIGH_ANGLE	equ 8a5ch
+DNLEFT_ANGLE	equ 8a5ch
+DNRIGH_ANGLE	equ 8a2fh
+
+WALL_SYMB	equ 8ab3h
+CL_WALL_SYMB	equ 8ac3h	; left symbol of central wall
+CR_WALL_SYMB	equ 8ab4h	; right symbol of central wall
 
 locals @@
 
@@ -87,7 +98,7 @@ PrintBdString	proc
 PrintString	proc
 
 		call GetLength
-		add bx, 02h
+		add bx, SYMB_OFFSET
 		mov si, bx
 
        @@print:	lodsb
@@ -116,23 +127,23 @@ DrawExtFrame	proc
 
 		push 3h				; empty_strings
 		push cx				; len of hor line
-		push 8ac4h			; mid2
-		push 8a03h			; mid1
-		mov ax, 8a2fh
-		mov bx, 8a5ch
-		mov dx, ax
-		mov cx, bx
+		push FRAME_DN_SYMB
+		push FRAME_UP_SYMB
+		mov ax, UPLEFT_ANGLE
+		mov bx, UPRIGH_ANGLE
+		mov cx, DNLEFT_ANGLE
+		mov dx, DNRIGH_ANGLE
 		call DrawHorLines		; external frame's upside and downside
 		mov ax, 1d
 		call ChangeString
 
 		push cx
-		mov ax, 8ab3h
-		mov bx, 8ac3h
-		mov cx, 8ab4h
+		mov ax, WALL_SYMB
+		mov bx, CL_WALL_SYMB
+		mov cx, CR_WALL_SYMB
 		call DrawWalls			; external frame's walls
 		sub cx, 2d
-		add di, 2d
+		add di, SYMB_OFFSET
 
 		ret
 		endp
