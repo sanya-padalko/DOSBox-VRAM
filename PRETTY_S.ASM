@@ -33,11 +33,10 @@ Main		proc
 		push 8ac4h			; mid2
 		push 8a03h			; mid1
 		mov ax, 8a2fh
-		mov dx, ax
 		mov bx, 8a5ch
+		mov dx, ax
 		mov cx, bx
 		call DrawHorLines		; after DrawHorLines cx = len
-		
 		mov ax, 1d
 		call ChangeString
 
@@ -46,7 +45,6 @@ Main		proc
 		mov bx, 8ac3h
 		mov cx, 8ab4h
 		call DrawWalls			; after DrawWalls cx = len
-
 		sub cx, 2d
 		add di, 2d
 
@@ -59,18 +57,16 @@ Main		proc
 		mov cx, 8cc0h
 		mov dx, 8cd9h
 		call DrawHorLines
-
 		mov ax, 1d
 		call ChangeString
 
 		mov ax, 8ac4h
-		stosw
-		
-		mov ah, 0ceh
+		mov bx, ax
+		push cx
+		call DrawEmpWalls
+		add di, 2d
+		mov ah, 09eh
 		call PrintString
-
-		mov ax, 8ac4h
-		stosw
 
 		ret
 		endp
@@ -85,15 +81,21 @@ Main		proc
 ;
 ; Expected:	1 < AX < 21, also expect that 2 string will be entered
 ;
-; Destruction:	AX, ES, BX
+; Destruction:	AX, ES
 ;=====================================================
 SkipStrings	proc
+
+		push bx
+		push dx
 
 		add ax, 02h
 		mov bx, 0ah
 		mul bx
 		add ax, 0b800h
 		mov es, ax		
+
+		pop dx
+		pop bx
 
 		ret
 		endp
@@ -212,60 +214,81 @@ GetLength	proc
 ;		CX = right central wall's symbol
 ;	[stack]	len = length of skipped symbols between walls
 ;
-; Result:	DX = old CX (from Entry)
-;		SI = AX
+; Result:	DX = AX
+;		SI = BX
+;		BX = AX
 ;		CX = len
 ;
 ; Expected:	DI = right offset
 ;
-; Distruction:	DX, SI, CX
+; Distruction:	DX, BX, SI, CX
 ;=====================================================
 DrawWalls	proc	len
 		push bp
 		mov bp, sp
 
-		mov dx, cx
-		mov cx, len
-		sal cx, 1d
-
-		mov si, ax
-		
-		stosw
-		add di, cx
-		stosw
-		sub di, cx
-		sub di, 4d
-
+		mov dx, ax			; draw first walls
+		mov si, bx
+		mov bx, ax
+		push len
+		call DrawEmpWalls
 		mov ax, 1d
 		call ChangeString
 		
-		mov ax, bx
-		stosw
-		add di, cx
-		mov ax, dx
-		stosw
-		sub di, cx
-		sub di, 4d
-
+		mov ax, si			; draw second walls
+		mov bx, cx
+		push len
+		call DrawEmpWalls
 		mov ax, 1d
 		call ChangeString
 		
-		mov ax, si
-		stosw
-		add di, cx
-		stosw
-		sub di, cx
-		sub di, 4d
-		
+		mov ax, dx			; draw third walls
+		mov bx, ax
+		push len
+		call DrawEmpWalls
 		mov ax, -2d
 		call ChangeString
 		
-		pop bp
+		pop bp				; stack clearing
 		pop ax
 		pop cx
 		push ax
-		mov ax, si
+		mov ax, dx
+		ret
+		endp
+;-----------------------------------------------------
 
+
+
+;=====================================================
+; Entry:	AX 	= left wall symbol
+;		BX 	= right wall symbol
+;	[stack]	len 	= count of empty symbols between walls	
+;
+; Result:	AX 	= returning address
+;		BX	= 2 * len
+;
+; Expected:	DI	= right offset
+;
+; Destruction:	AX, BX
+;=====================================================
+DrawEmpWalls	proc len
+		push bp
+		mov bp, sp
+
+		push di
+		stosw
+		mov ax, bx
+		mov bx, len
+		sal bx, 1d
+		add di, bx
+		stosw
+		pop di
+
+		pop bp
+		pop ax
+		add sp, 1 * 2d
+		push ax
 		ret
 		endp
 ;-----------------------------------------------------
@@ -305,12 +328,11 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 		push di
 		call BoundedHorLine
 		
-		mov cx, si
 		mov ax, emp_str
 		add ax, 1d
 		call ChangeString
 		
-		push cx
+		push si
 		push dx
 		push mid2
 		push len
@@ -359,11 +381,9 @@ BoundedHorLine	proc
 		mov di, [bp + 4]
 		mov cx, [bp + 6]
 		mov ax, [bp + 12]
-		
 		stosw
 		
 		mov ax, [bp + 8]
-		
 		push di
 		push cx
 		push ax
