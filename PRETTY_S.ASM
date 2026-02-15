@@ -23,42 +23,26 @@ Main		proc
 
 		mov ax, 0ah
 		call SkipStrings
-
 		call GetLength
 		add cl, 2d
 		call CalcOffset
 
-		push 3h				; empty_strings
-		push cx				; len of hor line
-		push 8ac4h			; mid2
-		push 8a03h			; mid1
-		mov ax, 8a2fh
-		mov bx, 8a5ch
-		mov dx, ax
-		mov cx, bx
-		call DrawHorLines		; after DrawHorLines cx = len
-		mov ax, 1d
-		call ChangeString
+		call DrawExtFrame	
+		call DrawIntFrame
+		call PrintBdString
 
-		push cx
-		mov ax, 8ab3h
-		mov bx, 8ac3h
-		mov cx, 8ab4h
-		call DrawWalls			; after DrawWalls cx = len
-		sub cx, 2d
-		add di, 2d
+		ret
+		endp
+;-----------------------------------------------------
 
-		push 1h
-		push cx
-		push 8cc4h
-		push 8cc4h
-		mov ax, 8cdah
-		mov bx, 8cbfh
-		mov cx, 8cc0h
-		mov dx, 8cd9h
-		call DrawHorLines
-		mov ax, 1d
-		call ChangeString
+
+
+;=====================================================
+; Entry:	-
+;
+; Result:	Printing bounded string
+;=====================================================
+PrintBdString	proc
 
 		mov ax, 8ac4h
 		mov bx, ax
@@ -67,85 +51,6 @@ Main		proc
 		add di, 2d
 		mov ah, 09eh
 		call PrintString
-
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-; Entry:	AX = count of empty string before frame
-;
-; Result:	ES on begin of (AX + 1)th string
-;
-; Expected:	1 < AX < 21, also expect that 2 string will be entered
-;
-; Destruction:	AX, ES
-;=====================================================
-SkipStrings	proc
-
-		push bx
-		push dx
-
-		add ax, 02h
-		mov bx, 0ah
-		mul bx
-		add ax, 0b800h
-		mov es, ax		
-
-		pop dx
-		pop bx
-
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-; Entry:	AX = the number of lines to change to
-;		ES = ...
-; Result: 	ES = old ES + AX strings
-;		AX = ES
-; Expected:	-
-;
-; Destruction:	ES, AX
-;=====================================================
-ChangeString	proc
-
-		push bx
-		push dx
-		mov bx, 10d
-		mul bx
-		
-		mov bx, es
-		add ax, bx
-		mov es, ax
-
-		pop dx
-		pop bx
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-; Entry:	CX = length of string
-;
-; Result:	DI = right offset for string with len CX
-;
-; Expected:	0 <= CX < 76d
-;
-; Destruction:	DI
-;=====================================================
-CalcOffset	proc
-		
-		mov di, 76d
-		sub di, cx
-		shr di, 1d
-		sal di, 1d
 
 		ret
 		endp
@@ -186,22 +91,29 @@ PrintString	proc
 
 
 ;=====================================================
-; Entry: 	[80h] = length of string
-;
-; Result:	CX = length of string
-;		BX = 80h
-;
-; Expected: 	-
-;
-; Destruction:	BX, CX
 ;=====================================================
-GetLength	proc
+DrawExtFrame	proc
 
-		mov bx, 80h
-		mov cl, [bx]
-		mov ch, 0h
-		dec cl
-		
+		push 3h				; empty_strings
+		push cx				; len of hor line
+		push 8ac4h			; mid2
+		push 8a03h			; mid1
+		mov ax, 8a2fh
+		mov bx, 8a5ch
+		mov dx, ax
+		mov cx, bx
+		call DrawHorLines		; external frame's upside and downside
+		mov ax, 1d
+		call ChangeString
+
+		push cx
+		mov ax, 8ab3h
+		mov bx, 8ac3h
+		mov cx, 8ab4h
+		call DrawWalls			; external frame's walls
+		sub cx, 2d
+		add di, 2d
+
 		ret
 		endp
 ;-----------------------------------------------------
@@ -209,17 +121,39 @@ GetLength	proc
 
 
 ;=====================================================
-; Entry:	AX = wall's symbol
-;		BX = left central wall's symbol
-;		CX = right central wall's symbol
-;	[stack]	len = length of skipped symbols between walls
+;=====================================================
+DrawIntFrame	proc
+
+		push 1h
+		push cx
+		push 8cc4h
+		push 8cc4h
+		mov ax, 8cdah
+		mov bx, 8cbfh
+		mov cx, 8cc0h
+		mov dx, 8cd9h
+		call DrawHorLines		; internal frame
+		mov ax, 1d
+		call ChangeString
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	AX 	= wall's symbol
+;		BX 	= left central wall's symbol
+;		CX 	= right central wall's symbol
+;	[stack]	len 	= length of skipped symbols between walls
 ;
-; Result:	DX = AX
-;		SI = BX
-;		BX = AX
-;		CX = len
+; Result:	DX 	= AX
+;		SI 	= BX
+;		BX 	= AX
+;		CX 	= len
 ;
-; Expected:	DI = right offset
+; Expected:	DI 	= right offset
 ;
 ; Distruction:	DX, BX, SI, CX
 ;=====================================================
@@ -305,13 +239,13 @@ DrawEmpWalls	proc len
 ;	[stack]	len	= len of middle part
 ;	[stack]	emp_str	= the count of string between horisontal lines
 ;
-; Result:	AX = returning address
-;		BX = 80h
-;		SI = old CX (from Entry)
-;		CX = len
+; Result:	AX 	= returning address
+;		BX 	= 80h
+;		SI 	= old CX (from Entry)
+;		CX 	= len
 ;
 ; Expected:	argument's direction -> CDECL, len >= 0
-;		DI = right offset
+;		DI 	= right offset
 ;
 ; Destruction:	AX, BX, CX, DX, SI
 ;=====================================================
@@ -327,10 +261,9 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 		push len
 		push di
 		call BoundedHorLine
-		
 		mov ax, emp_str
 		add ax, 1d
-		call ChangeString
+		call ChangeString	; first hor line and skipped empty strings
 		
 		push si
 		push dx
@@ -338,17 +271,16 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 		push len
 		push di
 		call BoundedHorLine
-
 		mov cx, len		
 		mov ax, emp_str
 		mov bx, -1d
 		mul bx
 		sub ax, 1d
-		call ChangeString
+		call ChangeString	; second hor line and returning to begin
 
 		pop bp	
 		pop ax
-		add sp, 4h * 2h
+		add sp, 4h * 2h		; stack clearing
 		push ax
 		ret
 		endp
@@ -443,6 +375,108 @@ DrawHorLine	proc symb, len, ind
 
 
 ;=====================================================
+; Entry:	AX 	= count of empty string before frame
+;
+; Result:	ES on begin of (AX + 1)th string
+;
+; Expected:	1 < AX < 21, also expect that 2 string will be entered
+;
+; Destruction:	AX, ES
+;=====================================================
+SkipStrings	proc
+
+		push bx
+		push dx
+
+		add ax, 02h
+		mov bx, 0ah
+		mul bx
+		add ax, 0b800h
+		mov es, ax		
+
+		pop dx
+		pop bx
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	AX 	= the number of lines to change to
+;		ES 	= ...
+; Result: 	ES 	= old ES + AX strings
+;		AX 	= ES
+; Expected:	-
+;
+; Destruction:	ES, AX
+;=====================================================
+ChangeString	proc
+
+		push bx
+		push dx
+		mov bx, 10d
+		mul bx
+		
+		mov bx, es
+		add ax, bx
+		mov es, ax
+
+		pop dx
+		pop bx
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	CX 	= length of string
+;
+; Result:	DI 	= right offset for string with len CX
+;
+; Expected:	0 <= CX < 76d
+;
+; Destruction:	DI
+;=====================================================
+CalcOffset	proc
+		
+		mov di, 76d
+		sub di, cx
+		shr di, 1d
+		sal di, 1d
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry: 	[80h] 	= length of string
+;
+; Result:	CX 	= length of string
+;		BX 	= 80h
+;
+; Expected: 	-
+;
+; Destruction:	BX, CX
+;=====================================================
+GetLength	proc
+
+		mov bx, 80h
+		mov cl, [bx]
+		mov ch, 0h
+		dec cl
+		
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
 ; Entry:	-
 ; Result:	Program ended
 ; Expected:	-
@@ -453,7 +487,6 @@ Exit		proc
 		mov ax, 4c00h
 		int 21h
 
-		ret
 		endp
 ;-----------------------------------------------------
 
