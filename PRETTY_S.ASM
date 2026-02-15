@@ -24,23 +24,30 @@ Main		proc
 		mov ax, 02h
 		call SkipStrings
 
+		call GetLength
+		add cl, 2d
+		call CalcOffset
+
+		push 3h				; empty_strings
+		push cx				; len of hor line
+		push 8ac4h			; mid2
+		push 8a03h			; mid1
 		mov ax, 8a2fh
+		mov dx, ax
 		mov bx, 8a5ch
 		mov cx, bx
-		mov dx, ax
-		push 8ac4h
-		push 8a03h
-		call DrawHorLines
+		call DrawHorLines		; after DrawHorLines cx = len
 		
 		mov ax, 1d
 		call ChangeString
 
+		push cx
 		mov ax, 8ab3h
 		mov bx, 8ac3h
 		mov cx, 8ab4h
-		call DrawWalls
+		call DrawWalls			; after DrawWalls cx = len
 
-		call GetLength
+		sub cx, 2d
 		add di, 2d
 		push 8cdah
 		push 8cbfh
@@ -210,22 +217,24 @@ GetLength	proc
 ; Entry:	AX = wall's symbol
 ;		BX = left central wall's symbol
 ;		CX = right central wall's symbol
+;	[stack]	len = length of skipped symbols between walls
 ;
-; Result:	DX = CX
+; Result:	DX = old CX (from Entry)
 ;		SI = AX
+;		CX = len
 ;
 ; Expected:	DI = right offset
 ;
-; Distruction:	DX, SI
+; Distruction:	DX, SI, CX
 ;=====================================================
-DrawWalls	proc
+DrawWalls	proc	len
+		push bp
+		mov bp, sp
+
 		mov dx, cx
-		mov si, bx
-		call GetLength
-		add cl, 2d
+		mov cx, len
 		sal cx, 1d
 
-		mov bx, si
 		mov si, ax
 		
 		stosw
@@ -254,11 +263,14 @@ DrawWalls	proc
 		stosw
 		sub di, cx
 		sub di, 4d
-
-		mov cx, dx
 		
 		mov ax, -2d
 		call ChangeString
+		
+		pop bp
+		pop ax
+		pop cx
+		push ax
 		mov ax, si
 
 		ret
@@ -274,17 +286,20 @@ DrawWalls	proc
 ;		DX 	= symbol of downright angle
 ;	[stack]	mid1	= symbol of middle of upside 
 ;	[stack]	mid2	= symbol of middle of downside
+;	[stack]	len	= len of middle part
+;	[stack]	emp_str	= the count of string between horisontal lines
 ;
 ; Result:	AX = returning address
 ;		BX = 80h
-;		SI = CX
+;		SI = old CX (from Entry)
+;		CX = len
+;
+; Expected:	argument's direction -> CDECL, len >= 0
 ;		DI = right offset
 ;
-; Expected:	argument's direction -> Pascal
-;
-; Destruction:	AX, BX, SI, DI
+; Destruction:	AX, BX, CX, DX, SI
 ;=====================================================
-DrawHorLines	proc	mid1, mid2
+DrawHorLines	proc	mid1, mid2, len, emp_str
 		push bp
 		mov bp, sp
 
@@ -293,33 +308,32 @@ DrawHorLines	proc	mid1, mid2
 		push ax
 		push bx
 		push mid1
-		call GetLength
-		call CalcOffset
-		add cl, 2d
-		push cx
+		push len
 		push di
 		call BoundedHorLine
-
-		call GetLength
-		add cl, 2
 		
-		mov ax, 04h
+		mov cx, si
+		mov ax, emp_str
+		add ax, 1d
 		call ChangeString
 		
-		push si
+		push cx
 		push dx
 		push mid2
-		push cx
+		push len
 		push di
 		call BoundedHorLine
-		
-		mov ax, -4d
+
+		mov cx, len		
+		mov ax, emp_str
+		mov bx, -1d
+		mul bx
+		sub ax, 1d
 		call ChangeString
 
-		mov cx, si
 		pop bp	
 		pop ax
-		add sp, 4d
+		add sp, 4h * 2h
 		push ax
 		ret
 		endp
