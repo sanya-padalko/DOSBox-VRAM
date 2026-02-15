@@ -41,6 +41,10 @@ Main		proc
 ; Entry:	-
 ;
 ; Result:	Printing bounded string
+;
+; Expected:	ES:[DI]	= right shift and offset
+;
+; Destruction:	AX, BX, CX, DI, SI
 ;=====================================================
 PrintBdString	proc
 
@@ -69,6 +73,7 @@ PrintBdString	proc
 ;		started from es:[di]
 ;
 ; Expected:	STRING ISN'T EMPTY and not too long ( < 126d symbols)
+;		ES:[DI]	  = right shift and offset
 ;
 ; Destruction:	DI, SI, AL, CX, BX
 ;=====================================================
@@ -91,6 +96,14 @@ PrintString	proc
 
 
 ;=====================================================
+; Entry:	-
+;
+; Result:	External frame will be drawing
+;		ES:[DI]	= old ES:[DI] shifted to the right down diagonally
+;
+; Expected:	ES:[DI]	= right shift and offset
+;
+; Destruction:	AX, BX, CX, DX, DI, SI, ES
 ;=====================================================
 DrawExtFrame	proc
 
@@ -121,6 +134,13 @@ DrawExtFrame	proc
 
 
 ;=====================================================
+; Entry:	-
+;
+; Result:	Internal frame will be drawing
+;
+; Expected:	ES:[DI]	= right shift and offset
+;
+; Destruction:	AX, BX, CX, DX, DI, ES
 ;=====================================================
 DrawIntFrame	proc
 
@@ -405,10 +425,11 @@ SkipStrings	proc
 
 ;=====================================================
 ; Entry:	AX 	= the number of lines to change to
-;		ES 	= ...
+;
 ; Result: 	ES 	= old ES + AX strings
 ;		AX 	= ES
-; Expected:	-
+;
+; Expected:	ES	= right shift
 ;
 ; Destruction:	ES, AX
 ;=====================================================
