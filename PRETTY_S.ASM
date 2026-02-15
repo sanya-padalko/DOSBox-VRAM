@@ -21,7 +21,7 @@ start: 		call Main
 ;=====================================================
 Main		proc
 
-		mov ax, 02h
+		mov ax, 0ah
 		call SkipStrings
 
 		call GetLength
@@ -142,7 +142,7 @@ CalcOffset	proc
 		
 		mov di, 76d
 		sub di, cx
-		shr di, 2d
+		shr di, 1d
 		sal di, 1d
 
 		ret
