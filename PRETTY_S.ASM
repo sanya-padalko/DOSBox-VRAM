@@ -49,25 +49,18 @@ Main		proc
 
 		sub cx, 2d
 		add di, 2d
-		push 8cdah
-		push 8cbfh
-		push 8cc4h
+
+		push 1h
 		push cx
-		push di
-		call BoundedHorLine
-
-		mov ax, 2d
-		call ChangeString
-
-		call GetLength
-		push 8cc0h
-		push 8cd9h
 		push 8cc4h
-		push cx
-		push di
-		call BoundedHorLine
+		push 8cc4h
+		mov ax, 8cdah
+		mov bx, 8cbfh
+		mov cx, 8cc0h
+		mov dx, 8cd9h
+		call DrawHorLines
 
-		mov ax, -1d
+		mov ax, 1d
 		call ChangeString
 
 		mov ax, 8ac4h
