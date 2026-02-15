@@ -3,11 +3,10 @@
 org 100h
 
 STR_BEF_FRAME	equ 0ah
-SYMB_OFFSET	equ 2d
 
-STR_COLOR	equ 09eh
-STR_LBOUND	equ 8ac4h
-STR_RBOUND	equ 8ac4h
+STRING_COLOR	equ 09eh
+STRING_LBOUND	equ 8ac4h
+STRING_RBOUND	equ 8ac4h
 
 FRAME_UP_SYMB	equ 8a03h
 FRAME_DN_SYMB	equ 8ac4h
@@ -26,6 +25,12 @@ INT_DR_SYMB	equ 8cd9h
 WALL_SYMB	equ 8ab3h
 CL_WALL_SYMB	equ 8ac3h	; left symbol of central wall
 CR_WALL_SYMB	equ 8ab4h	; right symbol of central wall
+
+SYMB_OFFSET	equ 2d
+ARGUE_SIZE	equ 2h
+END_CODE	equ 4c00h
+ES_STR_DELTA	equ 10d		; delta for ES to change string
+VMEM_ADDRESS	equ 0b800h
 
 locals @@
 
@@ -72,12 +77,12 @@ Main		proc
 ;=====================================================
 PrintBdString	proc
 
-		mov ax, STR_LBOUND
-		mov bx, STR_RBOUND
+		mov ax, STRING_LBOUND
+		mov bx, STRING_RBOUND
 		push cx
 		call DrawEmpWalls
 		add di, SYMB_OFFSET
-		mov ah, STR_COLOR
+		mov ah, STRING_COLOR
 		call PrintString
 
 		ret
@@ -265,7 +270,7 @@ DrawEmpWalls	proc len
 
 		pop bp
 		pop ax
-		add sp, 1 * 2d
+		add sp, 1 * ARGUE_SIZE
 		push ax
 		ret
 		endp
@@ -324,7 +329,7 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 
 		pop bp	
 		pop ax
-		add sp, 4h * 2h		; stack clearing
+		add sp, 4h * ARGUE_SIZE	; stack clearing
 		push ax
 		ret
 		endp
@@ -372,11 +377,11 @@ BoundedHorLine	proc
 		pop di
 		pop di
 		
-		sub di, 2d
+		sub di, SYMB_OFFSET
 		
 		pop bp
 		pop ax
-		add sp, 5h * 2h
+		add sp, 5h * ARGUE_SIZE
 		push ax
 		ret
 		endp
@@ -433,9 +438,9 @@ SkipStrings	proc
 		push dx
 
 		add ax, 02h
-		mov bx, 0ah
+		mov bx, ES_STR_DELTA
 		mul bx
-		add ax, 0b800h
+		add ax, VMEM_ADDRESS
 		mov es, ax		
 
 		pop dx
@@ -461,7 +466,7 @@ ChangeString	proc
 
 		push bx
 		push dx
-		mov bx, 10d
+		mov bx, ES_STR_DELTA
 		mul bx
 		
 		mov bx, es
@@ -529,7 +534,7 @@ GetLength	proc
 ;=====================================================
 Exit		proc
 
-		mov ax, 4c00h
+		mov ax, END_CODE
 		int 21h
 
 		endp
