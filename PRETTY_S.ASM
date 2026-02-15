@@ -11,11 +11,17 @@ STR_RBOUND	equ 8ac4h
 
 FRAME_UP_SYMB	equ 8a03h
 FRAME_DN_SYMB	equ 8ac4h
-
 UPLEFT_ANGLE	equ 8a2fh
 UPRIGH_ANGLE	equ 8a5ch
 DNLEFT_ANGLE	equ 8a5ch
 DNRIGH_ANGLE	equ 8a2fh
+
+INT_UP_SYMB	equ 8cc4h	; internal frame constants
+INT_DN_SYMB	equ 8cc4h
+INT_UL_SYMB	equ 8cdah
+INT_UR_SYMB	equ 8cbfh
+INT_DL_SYMB	equ 8cc0h
+INT_DR_SYMB	equ 8cd9h
 
 WALL_SYMB	equ 8ab3h
 CL_WALL_SYMB	equ 8ac3h	; left symbol of central wall
@@ -164,12 +170,12 @@ DrawIntFrame	proc
 
 		push 1h
 		push cx
-		push 8cc4h
-		push 8cc4h
-		mov ax, 8cdah
-		mov bx, 8cbfh
-		mov cx, 8cc0h
-		mov dx, 8cd9h
+		push INT_UP_SYMB
+		push INT_DN_SYMB
+		mov ax, INT_UL_SYMB
+		mov bx, INT_UR_SYMB
+		mov cx, INT_DL_SYMB
+		mov dx, INT_DR_SYMB
 		call DrawHorLines		; internal frame
 		mov ax, 1d
 		call ChangeString
