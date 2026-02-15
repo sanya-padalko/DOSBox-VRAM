@@ -2,7 +2,13 @@
 .code
 org 100h
 
-STR_LENGTH	equ 10d
+STR_BEF_FRAME	equ 0ah
+
+SYMB_OFFSET	equ 2d
+
+STR_COLOR	equ 09eh
+STR_LBOUND	equ 8ac4h
+STR_RBOUND	equ 8ac4h
 
 locals @@
 
@@ -21,10 +27,10 @@ start: 		call Main
 ;=====================================================
 Main		proc
 
-		mov ax, 0ah
+		mov ax, STR_BEF_FRAME
 		call SkipStrings
 		call GetLength
-		add cl, 2d
+		add cl, SYMB_OFFSET
 		call CalcOffset
 
 		call DrawExtFrame	
@@ -43,17 +49,18 @@ Main		proc
 ; Result:	Printing bounded string
 ;
 ; Expected:	ES:[DI]	= right shift and offset
+;		CX	= len of string
 ;
 ; Destruction:	AX, BX, CX, DI, SI
 ;=====================================================
 PrintBdString	proc
 
-		mov ax, 8ac4h
-		mov bx, ax
+		mov ax, STR_LBOUND
+		mov bx, STR_RBOUND
 		push cx
 		call DrawEmpWalls
-		add di, 2d
-		mov ah, 09eh
+		add di, SYMB_OFFSET
+		mov ah, STR_COLOR
 		call PrintString
 
 		ret
