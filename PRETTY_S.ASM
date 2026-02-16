@@ -49,14 +49,22 @@ start: 		call Main
 ;=====================================================
 Main		proc
 
+		mov bx, 81h
+		call SkipSpaces
+		call GetNumber
+		call SkipSpaces
+		push bx			; save index of string's begin
+
+		mov cx, ax
+
 		mov ax, STR_BEF_FRAME
 		call SkipStrings
-		call GetLength
-		add cl, SYMB_OFFSET
+		add cl, 2d
 		call CalcOffset
 
 		call DrawExtFrame	
 		call DrawIntFrame
+		pop bx
 		call PrintBdString
 
 		ret
@@ -66,16 +74,18 @@ Main		proc
 
 
 ;=====================================================
-; Entry:	-
+; Entry:	CX	= len of string
+;		BX	= index of string's begin
 ;
 ; Result:	Printing bounded string
 ;
 ; Expected:	ES:[DI]	= right shift and offset
-;		CX	= len of string
 ;
 ; Destruction:	AX, BX, CX, DI, SI
 ;=====================================================
 PrintBdString	proc
+
+		mov si, bx			; saving len of string
 
 		mov ax, STRING_LBOUND
 		mov bx, STRING_RBOUND
@@ -83,6 +93,7 @@ PrintBdString	proc
 		call DrawEmpWalls
 		add di, SYMB_OFFSET
 		mov ah, STRING_COLOR
+		mov bx, si
 		call PrintString
 
 		ret
@@ -92,9 +103,8 @@ PrintBdString	proc
 
 
 ;=====================================================
-; Entry:	[80h]     = lenght of string
-;		[81h]     = space
-;		[82h-...] = string
+; Entry:	CX	  = lenght of string
+;		BX    	  = index of first string symbol
 ;		AH 	  = color of string's symbols
 ;		ES:[DI]   = index of memory, from which printing will start
 ;
@@ -103,19 +113,22 @@ PrintBdString	proc
 ;
 ; Expected:	STRING ISN'T EMPTY and not too long ( < 126d symbols)
 ;		ES:[DI]	  = right shift and offset
+;		DS:[SI]	  = first symbol after string
+;		DX	  = 0
+;		AL	  = last string symbol
+;		
 ;
-; Destruction:	DI, SI, AL, CX, BX
+; Destruction:	DI, SI, AL, DX
 ;=====================================================
 PrintString	proc
 
-		call GetLength
-		add bx, SYMB_OFFSET
 		mov si, bx
+		mov dx, cx
 
        @@print:	lodsb
 		stosw
 
-		dec cl
+		dec dx
 		jne @@print
 
 		ret
@@ -129,6 +142,7 @@ PrintString	proc
 ;
 ; Result:	External frame will be drawing
 ;		ES:[DI]	= old ES:[DI] shifted to the right down diagonally
+;		CX	= len of string inside frame
 ;
 ; Expected:	ES:[DI]	= right shift and offset
 ;
@@ -260,12 +274,12 @@ DrawEmpWalls	proc len
 		mov bp, sp
 
 		push di
-		stosw
+		stosw			; left wall
 		mov ax, bx
 		mov bx, len
 		sal bx, 1d
-		add di, bx
-		stosw
+		add di, bx			; skip empty columns
+		stosw			; right wall
 		pop di
 
 		pop bp
@@ -362,16 +376,14 @@ BoundedHorLine	proc
 		mov di, [bp + 4]
 		mov cx, [bp + 6]
 		mov ax, [bp + 12]
-		stosw
-		
+		stosw			; left bound symbol
 		mov ax, [bp + 8]
 		push di
 		push cx
 		push ax
-		call DrawHorLine
-
+		call DrawHorLine		; horisontal line
 		mov ax, [bp + 10]
-		stosw
+		stosw			; right bound symbol
 
 		pop di
 		pop di
@@ -520,6 +532,65 @@ GetLength	proc
 		mov ch, 0h
 		dec cl
 		
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	[BX]	= first symbol of number
+;
+; Result:	AX	= number
+;		BX	= first index after number
+;
+; Expected:	[BX]	= digit
+;		Number separates spaces
+;
+; Destruction: 	AX, BX, SI
+;=====================================================
+GetNumber	proc
+
+		push dx
+
+		mov si, bx
+		mov ax, 0h
+		
+	@@add_c:mov bx, 10d
+		mul bx
+		add al, byte ptr [si]
+		sub al, '0'
+		add si, 1h
+		cmp byte ptr [si], ' '
+		jne @@add_c
+
+		pop dx		
+		mov bx, si
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	BX	= starting index from which skipping spaces
+;
+; Result:	[BX]	!= symbol of space	
+;
+; Expected:	80h <= BX < 100h
+;
+; Destruction:	BX
+;=====================================================
+SkipSpaces	proc
+
+		cmp byte ptr [bx], ' '
+		jne @@not_space
+
+	@@skip:	add bx, 1h
+		cmp byte ptr [bx], ' '
+		je @@skip
+		
+@@not_space:
 		ret
 		endp
 ;-----------------------------------------------------
