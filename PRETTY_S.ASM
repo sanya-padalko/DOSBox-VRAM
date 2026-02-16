@@ -51,11 +51,11 @@ Main		proc
 
 		mov bx, 81h
 		call SkipSpaces
-		call GetNumber
+		call GetNumber		; AX = len of string
 		call SkipSpaces
-		push bx			; save index of string's begin
-
-		mov cx, ax
+		mov cx, ax	
+		
+  		push bx			; save index of string's begin
 
 		mov ax, STR_BEF_FRAME
 		call SkipStrings
@@ -541,8 +541,8 @@ GetLength	proc
 ;=====================================================
 ; Entry:	[BX]	= first symbol of number
 ;
-; Result:	AX	= number
-;		BX	= first index after number
+; Result:	AX	= number (or [80h] if [BX] != digit)
+;		BX	= first index after number (or old BX if [BX] != digit)
 ;
 ; Expected:	[BX]	= digit
 ;		Number separates spaces
@@ -552,9 +552,14 @@ GetLength	proc
 GetNumber	proc
 
 		push dx
-
-		mov si, bx
 		mov ax, 0h
+
+		cmp byte ptr [bx], '0'
+		jb @@not_num
+		cmp byte ptr [bx], '9'
+		ja @@not_num
+		
+	@@base:	mov si, bx
 		
 	@@add_c:mov bx, 10d
 		mul bx
@@ -564,8 +569,14 @@ GetNumber	proc
 		cmp byte ptr [si], ' '
 		jne @@add_c
 
-		pop dx		
 		mov bx, si
+		jmp @@end
+
+  @@not_num:	mov si, 80h
+		mov al, byte ptr [si]
+		sub al, 1d
+
+	@@end:	pop dx		
 		ret
 		endp
 ;-----------------------------------------------------

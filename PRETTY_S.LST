@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 1
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 1
 pretty_s.asm
 
 
@@ -40,7 +40,7 @@ pretty_s.asm
      35				     locals @@
      36
      37	0100  E8 0003		     start:	     call Main
-     38	0103  E8 01EB				     call Exit
+     38	0103  E8 01FF				     call Exit
      39
      40
      41				     ;=====================================================
@@ -55,17 +55,17 @@ pretty_s.asm
      50	0106			     Main	     proc
      51
      52	0106  BB 0081				     mov bx, 81h
-     53	0109  E8 01D7				     call SkipSpaces
-     54	010C  E8 01B9				     call GetNumber
-     55	010F  E8 01D1				     call SkipSpaces
-     56	0112  53				     push bx		     ; save index of string's begin
+     53	0109  E8 01EB				     call SkipSpaces
+     54	010C  E8 01B9				     call GetNumber	     ; AX = len	of string
+     55	010F  E8 01E5				     call SkipSpaces
+     56	0112  8B C8				     mov cx, ax
      57
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 2
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 2
 pretty_s.asm
 
 
 
-     58	0113  8B C8				     mov cx, ax
+     58	0114  53				     push bx		     ; save index of string's begin
      59
      60	0115  B8 000A				     mov ax, STR_BEF_FRAME
      61	0118  E8 0177				     call SkipStrings
@@ -122,7 +122,7 @@ pretty_s.asm
     112				     ;		     started from es:[di]
     113				     ;
     114				     ; Expected:     STRING ISN'T EMPTY	and not	too long ( < 126d symbols)
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 3
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 3
 pretty_s.asm
 
 
@@ -184,7 +184,7 @@ pretty_s.asm
     169	0182  B8 8AB3				     mov ax, WALL_SYMB
     170	0185  BB 8AC3				     mov bx, CL_WALL_SYMB
     171	0188  B9 8AB4				     mov cx, CR_WALL_SYMB
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 4
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 4
 pretty_s.asm
 
 
@@ -246,7 +246,7 @@ pretty_s.asm
     226				     ;
     227				     ; Distruction:  DX, BX, SI, CX
     228				     ;=====================================================
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 5
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 5
 pretty_s.asm
 
 
@@ -308,7 +308,7 @@ pretty_s.asm
     283	020A  AB				     stosw		     ; left wall
     284	020B  8B C3				     mov ax, bx
     285	020D  8B 5E 04				     mov bx, len
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 6
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 6
 pretty_s.asm
 
 
@@ -370,7 +370,7 @@ pretty_s.asm
     340	023C  FF 76 08				     push len
     341	023F  57				     push di
     342	0240  E8 0018				     call BoundedHorLine
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 7
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 7
 pretty_s.asm
 
 
@@ -432,7 +432,7 @@ pretty_s.asm
     397
     398	0278  83 EF 02				     sub di, SYMB_OFFSET
     399
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 8
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 8
 pretty_s.asm
 
 
@@ -494,7 +494,7 @@ pretty_s.asm
     454
     455	0292  53				     push bx
     456	0293  52				     push dx
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 9
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 9
 pretty_s.asm
 
 
@@ -556,7 +556,7 @@ pretty_s.asm
     511	02B4			     CalcOffset	     proc
     512
     513	02B4  BF 004C				     mov di, 76d
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 10
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 10
 pretty_s.asm
 
 
@@ -597,8 +597,8 @@ pretty_s.asm
     547				     ;=====================================================
     548				     ; Entry:	     [BX]    = first symbol of number
     549				     ;
-    550				     ; Result:	     AX	     = number
-    551				     ;		     BX	     = first index after number
+    550				     ; Result:	     AX	     = number (or [80h]	if [BX]	!= digit)
+    551				     ;		     BX	     = first index after number	(or old	BX if [BX] != digit)
     552				     ;
     553				     ; Expected:     [BX]    = digit
     554				     ;		     Number separates spaces
@@ -608,74 +608,90 @@ pretty_s.asm
     558	02C8			     GetNumber	     proc
     559
     560	02C8  52				     push dx
-    561
-    562	02C9  8B F3				     mov si, bx
-    563	02CB  B8 0000				     mov ax, 0h
-    564
-    565	02CE  BB 000A			     @@add_c:mov bx, 10d
-    566	02D1  F7 E3				     mul bx
-    567	02D3  02 04				     add al, byte ptr [si]
-    568	02D5  2C 30				     sub al, '0'
-    569	02D7  83 C6 01				     add si, 1h
-    570	02DA  80 3C 20				     cmp byte ptr [si],	' '
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 11
+    561	02C9  B8 0000				     mov ax, 0h
+    562
+    563	02CC  80 3F 30				     cmp byte ptr [bx],	'0'
+    564	02CF  72 1D				     jb	@@not_num
+    565	02D1  80 3F 39				     cmp byte ptr [bx],	'9'
+    566	02D4  77 18				     ja	@@not_num
+    567
+    568	02D6  8B F3			     @@base: mov si, bx
+    569
+    570	02D8  BB 000A			     @@add_c:mov bx, 10d
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 11
 pretty_s.asm
 
 
 
-    571	02DD  75 EF				     jne @@add_c
-    572
-    573	02DF  5A				     pop dx
-    574	02E0  8B DE				     mov bx, si
-    575	02E2  C3				     ret
-    576	02E3					     endp
-    577				     ;-----------------------------------------------------
-    578
-    579
+    571	02DB  F7 E3				     mul bx
+    572	02DD  02 04				     add al, byte ptr [si]
+    573	02DF  2C 30				     sub al, '0'
+    574	02E1  83 C6 01				     add si, 1h
+    575	02E4  80 3C 20				     cmp byte ptr [si],	' '
+    576	02E7  75 EF				     jne @@add_c
+    577
+    578	02E9  8B DE				     mov bx, si
+    579	02EB  EB 08 90				     jmp @@end
     580
-    581				     ;=====================================================
-    582				     ; Entry:	     BX	     = starting	index from which skipping spaces
-    583				     ;
-    584				     ; Result:	     [BX]    !=	symbol of space
-    585				     ;
-    586				     ; Expected:     80h <= BX < 100h
-    587				     ;
-    588				     ; Destruction:  BX
-    589				     ;=====================================================
-    590	02E3			     SkipSpaces	     proc
+    581	02EE  BE 0080		       @@not_num:    mov si, 80h
+    582	02F1  8A 04				     mov al, byte ptr [si]
+    583	02F3  2C 01				     sub al, 1d
+    584
+    585	02F5  5A			     @@end:  pop dx
+    586	02F6  C3				     ret
+    587	02F7					     endp
+    588				     ;-----------------------------------------------------
+    589
+    590
     591
-    592	02E3  80 3F 20				     cmp byte ptr [bx],	' '
-    593	02E6  75 08				     jne @@not_space
-    594
-    595	02E8  83 C3 01			     @@skip: add bx, 1h
-    596	02EB  80 3F 20				     cmp byte ptr [bx],	' '
-    597	02EE  74 F8				     je	@@skip
-    598
-    599	02F0			     @@not_space:
-    600	02F0  C3				     ret
-    601	02F1					     endp
-    602				     ;-----------------------------------------------------
-    603
-    604
+    592				     ;=====================================================
+    593				     ; Entry:	     BX	     = starting	index from which skipping spaces
+    594				     ;
+    595				     ; Result:	     [BX]    !=	symbol of space
+    596				     ;
+    597				     ; Expected:     80h <= BX < 100h
+    598				     ;
+    599				     ; Destruction:  BX
+    600				     ;=====================================================
+    601	02F7			     SkipSpaces	     proc
+    602
+    603	02F7  80 3F 20				     cmp byte ptr [bx],	' '
+    604	02FA  75 08				     jne @@not_space
     605
-    606				     ;=====================================================
-    607				     ; Entry:	     -
-    608				     ; Result:	     Program ended
-    609				     ; Expected:     -
-    610				     ; Destruction:  AX
-    611				     ;=====================================================
-    612	02F1			     Exit	     proc
-    613
-    614	02F1  B8 4C00				     mov ax, END_CODE
-    615	02F4  CD 21				     int 21h
+    606	02FC  83 C3 01			     @@skip: add bx, 1h
+    607	02FF  80 3F 20				     cmp byte ptr [bx],	' '
+    608	0302  74 F8				     je	@@skip
+    609
+    610	0304			     @@not_space:
+    611	0304  C3				     ret
+    612	0305					     endp
+    613				     ;-----------------------------------------------------
+    614
+    615
     616
-    617	02F6					     endp
-    618				     ;-----------------------------------------------------
-    619
-    620
-    621
-    622				     end start
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 12
+    617				     ;=====================================================
+    618				     ; Entry:	     -
+    619				     ; Result:	     Program ended
+    620				     ; Expected:     -
+    621				     ; Destruction:  AX
+    622				     ;=====================================================
+    623	0305			     Exit	     proc
+    624
+    625	0305  B8 4C00				     mov ax, END_CODE
+    626	0308  CD 21				     int 21h
+    627
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 12
+pretty_s.asm
+
+
+
+    628	030A					     endp
+    629				     ;-----------------------------------------------------
+    630
+    631
+    632
+    633				     end start
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 13
 Symbol Table
 
 
@@ -685,13 +701,16 @@ Symbol Name			  Type	 Value
 
 ??DATE				  Text	 "02/16/26"
 ??FILENAME			  Text	 "pretty_s"
-??TIME				  Text	 "13:31:07"
+??TIME				  Text	 "17:58:34"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
-@@ADD_C				  Near	 DGROUP:02CE
-@@NOT_SPACE			  Near	 DGROUP:02F0
+@@ADD_C				  Near	 DGROUP:02D8
+@@BASE				  Near	 DGROUP:02D6
+@@END				  Near	 DGROUP:02F5
+@@NOT_NUM			  Near	 DGROUP:02EE
+@@NOT_SPACE			  Near	 DGROUP:0304
 @@PRINT				  Near	 DGROUP:0147
-@@SKIP				  Near	 DGROUP:02E8
+@@SKIP				  Near	 DGROUP:02FC
 @CODE				  Text	 DGROUP
 @CODESIZE			  Text	 0
 @CPU				  Text	 0101H
@@ -720,7 +739,7 @@ DRAWWALLS			  Near	 DGROUP:01CA
 EMP_STR				  Number [DGROUP:BP+000A]
 END_CODE			  Number 4C00
 ES_STR_DELTA			  Number 000A
-EXIT				  Near	 DGROUP:02F1
+EXIT				  Near	 DGROUP:0305
 FRAME_DN_SYMB			  Number 8AC4
 FRAME_UP_SYMB			  Number 8A03
 GETLENGTH			  Near	 DGROUP:02BE
@@ -734,16 +753,16 @@ INT_UP_SYMB			  Number 8CC4
 INT_UR_SYMB			  Number 8CBF
 LEN				  Number [DGROUP:BP+0006]
 MAIN				  Near	 DGROUP:0106
-MID1				  Number [DGROUP:BP+0004]
-MID2				  Number [DGROUP:BP+0006]
-PRINTBDSTRING			  Near	 DGROUP:012C
-Turbo Assembler	 Version 4.1	    02/16/26 13:31:07	    Page 13
+Turbo Assembler	 Version 4.1	    02/16/26 17:58:35	    Page 14
 Symbol Table
 
 
 
+MID1				  Number [DGROUP:BP+0004]
+MID2				  Number [DGROUP:BP+0006]
+PRINTBDSTRING			  Near	 DGROUP:012C
 PRINTSTRING			  Near	 DGROUP:0143
-SKIPSPACES			  Near	 DGROUP:02E3
+SKIPSPACES			  Near	 DGROUP:02F7
 SKIPSTRINGS			  Near	 DGROUP:0292
 START				  Near	 DGROUP:0100
 STRING_COLOR			  Number 009E
@@ -761,5 +780,5 @@ Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  02F6 Word	  Public  CODE
+  _TEXT				  16  030A Word	  Public  CODE
 
