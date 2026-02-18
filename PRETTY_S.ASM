@@ -2,29 +2,13 @@
 .code
 org 100h
 
-STR_BEF_FRAME	equ 0ah
+STR_BEF_FRAME	equ 10d
 
-STRING_COLOR	equ 09eh
-STRING_LBOUND	equ 8ac4h
-STRING_RBOUND	equ 8ac4h
-
-FRAME_UP_SYMB	equ 8a03h
-FRAME_DN_SYMB	equ 8ac4h
-UPLEFT_ANGLE	equ 8a2fh
-UPRIGH_ANGLE	equ 8a5ch
-DNLEFT_ANGLE	equ 8a5ch
-DNRIGH_ANGLE	equ 8a2fh
-
-INT_UP_SYMB	equ 8cc4h	; internal frame constants
-INT_DN_SYMB	equ 8cc4h
-INT_UL_SYMB	equ 8cdah
-INT_UR_SYMB	equ 8cbfh
-INT_DL_SYMB	equ 8cc0h
-INT_DR_SYMB	equ 8cd9h
-
-WALL_SYMB	equ 8ab3h
-CL_WALL_SYMB	equ 8ac3h	; left symbol of central wall
-CR_WALL_SYMB	equ 8ab4h	; right symbol of central wall
+STRING_COLOR	equ 9eh
+FRAME_HOR_COL	equ 8ah
+FRAME_WALL_COL	equ 8ah
+INT_COL			equ 8eh		; color of internal frame
+STR_BOUND_COL	equ 8ah
 
 SYMB_OFFSET	equ 2d
 ARGUE_SIZE	equ 2h
@@ -45,7 +29,7 @@ start: 		call Main
 ;
 ; Expected:	-
 ;
-; Destruction:	AX, BX, ES, DI, DS, SI, CL
+; Destruction:	AX, BX, CX, DX, ES, DI, DS, SI, CL
 ;=====================================================
 Main		proc
 
@@ -53,8 +37,8 @@ Main		proc
 		call SkipSpaces
 		call GetNumber		; AX = len of string
 		call SkipSpaces
-		mov cx, ax	
-		
+		mov cx, ax
+
   		push bx			; save index of string's begin
 
 		mov ax, STR_BEF_FRAME
@@ -62,9 +46,10 @@ Main		proc
 		add cl, 2d
 		call CalcOffset
 
-		call DrawExtFrame	
+		mov bx, offset FRAME_TYPES
+		call DrawExtFrame
 		call DrawIntFrame
-		pop bx
+		pop dx
 		call PrintBdString
 
 		ret
@@ -75,7 +60,7 @@ Main		proc
 
 ;=====================================================
 ; Entry:	CX	= len of string
-;		BX	= index of string's begin
+;		DX	= index of string's begin
 ;
 ; Result:	Printing bounded string
 ;
@@ -85,16 +70,19 @@ Main		proc
 ;=====================================================
 PrintBdString	proc
 
-		mov si, bx			; saving len of string
-
-		mov ax, STRING_LBOUND
-		mov bx, STRING_RBOUND
-		push cx
-		call DrawEmpWalls
-		add di, SYMB_OFFSET
+		push bx
+		mov ah, STR_BOUND_COL
+		mov al, [bx]
+		inc bx
+		stosw
 		mov ah, STRING_COLOR
-		mov bx, si
+		mov bx, dx
 		call PrintString
+		pop bx
+		mov ah, STR_BOUND_COL
+		mov al, [bx]
+		inc bx
+		stosw
 
 		ret
 		endp
@@ -108,15 +96,15 @@ PrintBdString	proc
 ;		AH 	  = color of string's symbols
 ;		ES:[DI]   = index of memory, from which printing will start
 ;
-; Result:	print string from command line (without first space) 
+; Result:	print string from command line (without first space)
 ;		started from es:[di]
 ;
 ; Expected:	STRING ISN'T EMPTY and not too long ( < 126d symbols)
-;		ES:[DI]	  = right shift and offset
+;		ES:[DI]	  = right shift and offset (on first symbol after string)
 ;		DS:[SI]	  = first symbol after string
 ;		DX	  = 0
 ;		AL	  = last string symbol
-;		
+;
 ;
 ; Destruction:	DI, SI, AL, DX
 ;=====================================================
@@ -150,22 +138,21 @@ PrintString	proc
 ;=====================================================
 DrawExtFrame	proc
 
+		mov ah, FRAME_HOR_COL
 		push 3h				; empty_strings
 		push cx				; len of hor line
-		push FRAME_DN_SYMB
-		push FRAME_UP_SYMB
-		mov ax, UPLEFT_ANGLE
-		mov bx, UPRIGH_ANGLE
-		mov cx, DNLEFT_ANGLE
-		mov dx, DNRIGH_ANGLE
+		mov al, [bx]
+		inc bx
+		push ax
+		mov al, [bx]
+		inc bx
+		push ax
 		call DrawHorLines		; external frame's upside and downside
 		mov ax, 1d
 		call ChangeString
 
+		mov ah, FRAME_WALL_COL
 		push cx
-		mov ax, WALL_SYMB
-		mov bx, CL_WALL_SYMB
-		mov cx, CR_WALL_SYMB
 		call DrawWalls			; external frame's walls
 		sub cx, 2d
 		add di, SYMB_OFFSET
@@ -187,14 +174,15 @@ DrawExtFrame	proc
 ;=====================================================
 DrawIntFrame	proc
 
+		mov ah, INT_COL
 		push 1h
 		push cx
-		push INT_UP_SYMB
-		push INT_DN_SYMB
-		mov ax, INT_UL_SYMB
-		mov bx, INT_UR_SYMB
-		mov cx, INT_DL_SYMB
-		mov dx, INT_DR_SYMB
+		mov al, [bx]
+		inc bx
+		push ax
+		mov al, [bx]
+		inc bx
+		push ax
 		call DrawHorLines		; internal frame
 		mov ax, 1d
 		call ChangeString
@@ -206,46 +194,56 @@ DrawIntFrame	proc
 
 
 ;=====================================================
-; Entry:	AX 	= wall's symbol
-;		BX 	= left central wall's symbol
-;		CX 	= right central wall's symbol
+; Entry:	AX 		= wall's symbol
+;		BX 		= left central wall's symbol
+;		CX 		= right central wall's symbol
 ;	[stack]	len 	= length of skipped symbols between walls
 ;
-; Result:	DX 	= AX
-;		SI 	= BX
+; Result:	BX = index of first unused frame symbol
+;		(exp.: [BX] = upleft angle of int. frame)
+;		SI 	= wall's symbol
 ;		BX 	= AX
 ;		CX 	= len
 ;
-; Expected:	DI 	= right offset
+; Expected:	DI 		 = right offset
+;			[BX]	 = wall's symbol
+;			[BX + 1] = central right wall symbol
+;			[BX + 2] = central left wall symbol
 ;
-; Distruction:	DX, BX, SI, CX
+; Distruction:	BX, SI, CX
 ;=====================================================
 DrawWalls	proc	len
 		push bp
 		mov bp, sp
 
-		mov dx, ax			; draw first walls
-		mov si, bx
-		mov bx, ax
+		mov ah, FRAME_WALL_COL
+		mov al, [bx]		; draw first walls
+		inc bx
+		mov si, ax
+		mov cx, ax
 		push len
 		call DrawEmpWalls
 		mov ax, 1d
 		call ChangeString
-		
-		mov ax, si			; draw second walls
-		mov bx, cx
+
+		mov ah, FRAME_WALL_COL
+		mov al, [bx]		; draw second walls
+		inc bx
+		mov ch, FRAME_WALL_COL
+		mov cl, [bx]
+		inc bx
 		push len
 		call DrawEmpWalls
 		mov ax, 1d
 		call ChangeString
-		
-		mov ax, dx			; draw third walls
-		mov bx, ax
+
+		mov ax, si			; draw third walls
+		mov cx, si
 		push len
 		call DrawEmpWalls
 		mov ax, -2d
 		call ChangeString
-		
+
 		pop bp				; stack clearing
 		pop ax
 		pop cx
@@ -259,15 +257,15 @@ DrawWalls	proc	len
 
 ;=====================================================
 ; Entry:	AX 	= left wall symbol
-;		BX 	= right wall symbol
-;	[stack]	len 	= count of empty symbols between walls	
+;		CX 	= right wall symbol
+;	[stack]	len 	= count of empty symbols between walls
 ;
 ; Result:	AX 	= returning address
-;		BX	= 2 * len
+; 		CX = 2 * len
 ;
 ; Expected:	DI	= right offset
 ;
-; Destruction:	AX, BX
+; Destruction:	AX, CX
 ;=====================================================
 DrawEmpWalls	proc len
 		push bp
@@ -275,10 +273,10 @@ DrawEmpWalls	proc len
 
 		push di
 		stosw			; left wall
-		mov ax, bx
-		mov bx, len
-		sal bx, 1d
-		add di, bx			; skip empty columns
+		mov ax, cx
+		mov cx, len
+		sal cx, 1d
+		add di, cx		; skip empty columns
 		stosw			; right wall
 		pop di
 
@@ -297,13 +295,13 @@ DrawEmpWalls	proc len
 ;		BX 	= symbol of upright angle
 ;		CX 	= symbol of downleft angle
 ;		DX 	= symbol of downright angle
-;	[stack]	mid1	= symbol of middle of upside 
+;	[stack]	mid1	= symbol of middle of upside
 ;	[stack]	mid2	= symbol of middle of downside
 ;	[stack]	len	= len of middle part
 ;	[stack]	emp_str	= the count of string between horisontal lines
 ;
 ; Result:	AX 	= returning address
-;		BX 	= 80h
+;		BX 	= first unused frame symbol
 ;		SI 	= old CX (from Entry)
 ;		CX 	= len
 ;
@@ -318,8 +316,12 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 
 		mov si, cx
 
+		mov al, [bx]
+		inc bx
 		push ax
-		push bx
+		mov al, [bx]
+		inc bx
+		push ax
 		push mid1
 		push len
 		push di
@@ -327,21 +329,26 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 		mov ax, emp_str
 		add ax, 1d
 		call ChangeString	; first hor line and skipped empty strings
-		
-		push si
-		push dx
+
+		mov ah, FRAME_HOR_COL
+		mov al, [bx]
+		inc bx
+		push ax
+		mov al, [bx]
+		inc bx
+		push ax
 		push mid2
 		push len
 		push di
 		call BoundedHorLine
-		mov cx, len		
 		mov ax, emp_str
-		mov bx, -1d
-		mul bx
+		mov cx, -1d
+		mul cx
 		sub ax, 1d
 		call ChangeString	; second hor line and returning to begin
+		mov cx, len
 
-		pop bp	
+		pop bp
 		pop ax
 		add sp, 4h * ARGUE_SIZE	; stack clearing
 		push ax
@@ -388,9 +395,9 @@ BoundedHorLine	proc
 		pop di
 		pop di
 		pop di
-		
+
 		sub di, SYMB_OFFSET
-		
+
 		pop bp
 		pop ax
 		add sp, 5h * ARGUE_SIZE
@@ -453,7 +460,7 @@ SkipStrings	proc
 		mov bx, ES_STR_DELTA
 		mul bx
 		add ax, VMEM_ADDRESS
-		mov es, ax		
+		mov es, ax
 
 		pop dx
 		pop bx
@@ -480,7 +487,7 @@ ChangeString	proc
 		push dx
 		mov bx, ES_STR_DELTA
 		mul bx
-		
+
 		mov bx, es
 		add ax, bx
 		mov es, ax
@@ -503,7 +510,7 @@ ChangeString	proc
 ; Destruction:	DI
 ;=====================================================
 CalcOffset	proc
-		
+
 		mov di, 76d
 		sub di, cx
 		shr di, 1d
@@ -531,7 +538,7 @@ GetLength	proc
 		mov cl, [bx]
 		mov ch, 0h
 		dec cl
-		
+
 		ret
 		endp
 ;-----------------------------------------------------
@@ -558,9 +565,9 @@ GetNumber	proc
 		jb @@not_num
 		cmp byte ptr [bx], '9'
 		ja @@not_num
-		
+
 	@@base:	mov si, bx
-		
+
 	@@add_c:mov bx, 10d
 		mul bx
 		add al, byte ptr [si]
@@ -576,7 +583,7 @@ GetNumber	proc
 		mov al, byte ptr [si]
 		sub al, 1d
 
-	@@end:	pop dx		
+	@@end:	pop dx
 		ret
 		endp
 ;-----------------------------------------------------
@@ -586,7 +593,7 @@ GetNumber	proc
 ;=====================================================
 ; Entry:	BX	= starting index from which skipping spaces
 ;
-; Result:	[BX]	!= symbol of space	
+; Result:	[BX]	!= symbol of space
 ;
 ; Expected:	80h <= BX < 100h
 ;
@@ -600,7 +607,7 @@ SkipSpaces	proc
 	@@skip:	add bx, 1h
 		cmp byte ptr [bx], ' '
 		je @@skip
-		
+
 @@not_space:
 		ret
 		endp
@@ -622,6 +629,7 @@ Exit		proc
 		endp
 ;-----------------------------------------------------
 
+FRAME_TYPES	db 'Ä?/\\/³Ã´ÄÄÚ¿ÀÙÄÄ', 'ÄÄÚ¿ÀÙ³Ã´ÄÄÚ¿ÀÙÄÄ'
 
 
 end start
