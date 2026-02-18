@@ -7,7 +7,7 @@ STR_BEF_FRAME	equ 10d
 STRING_COLOR	equ 9eh
 FRAME_HOR_COL	equ 8ah
 FRAME_WALL_COL	equ 8ah
-INT_FRAME_COL	equ 8eh		; color of internal frame
+INT_FRAME_COL	equ 8ch		; color of internal frame
 STR_BOUND_COL	equ 8ah
 
 BYTE_SHIFT		equ 8h
@@ -36,18 +36,23 @@ Main		proc
 
 		mov bx, 81h
 		call SkipSpaces
-		call GetNumber		; AX = len of string
+		call GetNumber		; AX = type of frame
 		call SkipSpaces
-		mov cx, ax
+		mov si, 80h
+		mov cl, byte ptr [si]
+		sub cx, bx
+		add cx, 81h		; real size of string
 
   		push bx			; save index of string's begin
+		mov bx, offset FRAME_TYPES
+		sal ax, 4d
+		add bx, ax		; setting type of frame
 
 		mov ax, STR_BEF_FRAME
 		call SkipStrings
 		add cl, 2d
 		call CalcOffset
 
-		mov bx, offset FRAME_TYPES
 		call DrawExtFrame
 		call DrawIntFrame
 		pop dx
@@ -74,7 +79,6 @@ PrintBdString	proc
 		push bx
 		mov ah, STR_BOUND_COL
 		mov al, [bx]
-		inc bx
 		stosw
 		mov ah, STRING_COLOR
 		mov bx, dx
@@ -551,7 +555,7 @@ GetLength	proc
 ;=====================================================
 ; Entry:	[BX]	= first symbol of number
 ;
-; Result:	AX	= number (or [80h] if [BX] != digit)
+; Result:	AX	= number (or 0 if [BX] != digit)
 ;		BX	= first index after number (or old BX if [BX] != digit)
 ;
 ; Expected:	[BX]	= digit
@@ -582,9 +586,7 @@ GetNumber	proc
 		mov bx, si
 		jmp @@end
 
-  @@not_num:	mov si, 80h
-		mov al, byte ptr [si]
-		sub al, 1d
+  @@not_num:	mov ah, 0h
 
 	@@end:	pop dx
 		ret
@@ -632,7 +634,7 @@ Exit		proc
 		endp
 ;-----------------------------------------------------
 
-FRAME_TYPES	db 'Ä?/\\/³Ã´ÄÄÚ¿ÀÙÄÄ', 'ÄÄÚ¿ÀÙ³Ã´ÄÄÚ¿ÀÙÄÄ'
+FRAME_TYPES	db 'Ä^/\\/³Ã´ÄÄÚ¿ÀÙÄ', 'ÄÄÚ¿ÀÙ³Ã´ÄÄÚ¿ÀÙÄ', 'ûûûûûûûûû       ', '±±±±±±±±±', 1eh, 1fh, 4 DUP(09h), 'Î'
 
 
 end start
