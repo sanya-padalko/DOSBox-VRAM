@@ -7,12 +7,13 @@ STR_BEF_FRAME	equ 10d
 STRING_COLOR	equ 9eh
 FRAME_HOR_COL	equ 8ah
 FRAME_WALL_COL	equ 8ah
-INT_COL			equ 8eh		; color of internal frame
+INT_FRAME_COL	equ 8eh		; color of internal frame
 STR_BOUND_COL	equ 8ah
 
-SYMB_OFFSET	equ 2d
-ARGUE_SIZE	equ 2h
-END_CODE	equ 4c00h
+BYTE_SHIFT		equ 8h
+SYMB_OFFSET		equ 2d
+ARGUE_SIZE		equ 2h
+END_CODE		equ 4c00h
 ES_STR_DELTA	equ 10d		; delta for ES to change string
 VMEM_ADDRESS	equ 0b800h
 
@@ -147,6 +148,7 @@ DrawExtFrame	proc
 		mov al, [bx]
 		inc bx
 		push ax
+		mov cl, FRAME_HOR_COL
 		call DrawHorLines		; external frame's upside and downside
 		mov ax, 1d
 		call ChangeString
@@ -174,7 +176,7 @@ DrawExtFrame	proc
 ;=====================================================
 DrawIntFrame	proc
 
-		mov ah, INT_COL
+		mov ah, INT_FRAME_COL
 		push 1h
 		push cx
 		mov al, [bx]
@@ -183,6 +185,7 @@ DrawIntFrame	proc
 		mov al, [bx]
 		inc bx
 		push ax
+		mov cl, INT_FRAME_COL
 		call DrawHorLines		; internal frame
 		mov ax, 1d
 		call ChangeString
@@ -291,10 +294,7 @@ DrawEmpWalls	proc len
 
 
 ;=====================================================
-; Entry:	AX 	= symbol of upleft angle
-;		BX 	= symbol of upright angle
-;		CX 	= symbol of downleft angle
-;		DX 	= symbol of downright angle
+; Entry:	CL = color of horisontal lines (in little byte)
 ;	[stack]	mid1	= symbol of middle of upside
 ;	[stack]	mid2	= symbol of middle of downside
 ;	[stack]	len	= len of middle part
@@ -314,8 +314,10 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 		push bp
 		mov bp, sp
 
+		mov ch, 0h
 		mov si, cx
 
+		mov ah, cl
 		mov al, [bx]
 		inc bx
 		push ax
@@ -330,7 +332,8 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 		add ax, 1d
 		call ChangeString	; first hor line and skipped empty strings
 
-		mov ah, FRAME_HOR_COL
+		mov ax, si
+		sal ax, BYTE_SHIFT
 		mov al, [bx]
 		inc bx
 		push ax
