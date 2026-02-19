@@ -17,6 +17,11 @@ END_CODE	equ 4c00h
 ES_STR_DELTA	equ 10d		; delta for ES to change string
 VMEM_ADDRESS	equ 0b800h
 
+FRAME_LODSB	macro
+		mov al, [bx]
+		inc bx
+		endm
+
 locals @@
 
 start: 		call Main
@@ -78,8 +83,7 @@ Main		proc
 PrintBdString	proc
 
 		mov ah, STR_BOUND_COL
-		mov al, [bx]
-		inc bx
+		FRAME_LODSB
 		push bx
 		stosw
 		mov ah, STRING_COLOR
@@ -87,8 +91,7 @@ PrintBdString	proc
 		call PrintString
 		pop bx
 		mov ah, STR_BOUND_COL
-		mov al, [bx]
-		inc bx
+		FRAME_LODSB
 		stosw
 
 		ret
@@ -148,11 +151,9 @@ DrawExtFrame	proc
 		mov ah, FRAME_HOR_COL
 		push 3h				; empty_strings
 		push cx				; len of hor line
-		mov al, [bx]
-		inc bx
+		FRAME_LODSB
 		push ax
-		mov al, [bx]
-		inc bx
+		FRAME_LODSB
 		push ax
 		mov cl, FRAME_HOR_COL
 		call DrawHorLines		; external frame's upside and downside
@@ -185,11 +186,9 @@ DrawIntFrame	proc
 		mov ah, INT_FRAME_COL
 		push 1h
 		push cx
-		mov al, [bx]
-		inc bx
+		FRAME_LODSB
 		push ax
-		mov al, [bx]
-		inc bx
+		FRAME_LODSB
 		push ax
 		mov cl, INT_FRAME_COL
 		call DrawHorLines		; internal frame
@@ -226,8 +225,7 @@ DrawWalls	proc	len
 		mov bp, sp
 
 		mov ah, FRAME_WALL_COL
-		mov al, [bx]		; draw first walls
-		inc bx
+		FRAME_LODSB			; draw first walls
 		mov si, ax
 		mov cx, ax
 		push len
@@ -236,8 +234,7 @@ DrawWalls	proc	len
 		call ChangeString
 
 		mov ah, FRAME_WALL_COL
-		mov al, [bx]		; draw second walls
-		inc bx
+		FRAME_LODSB			; draw second walls
 		mov ch, FRAME_WALL_COL
 		mov cl, [bx]
 		inc bx
@@ -324,11 +321,9 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 		mov si, cx
 
 		mov ah, cl
-		mov al, [bx]
-		inc bx
+		FRAME_LODSB
 		push ax
-		mov al, [bx]
-		inc bx
+		FRAME_LODSB
 		push ax
 		push mid1
 		push len
@@ -340,11 +335,9 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 
 		mov ax, si
 		sal ax, BYTE_SHIFT
-		mov al, [bx]
-		inc bx
+		FRAME_LODSB
 		push ax
-		mov al, [bx]
-		inc bx
+		FRAME_LODSB
 		push ax
 		push mid2
 		push len
@@ -637,6 +630,5 @@ Exit		proc
 ;-----------------------------------------------------
 
 FRAME_TYPES	db 'ÄÄ/\\/³Ã´ÄÄÚ¿ÀÙÄÄ', '²²²²²²²²²°°°°°°²²', 'ûûûûûûûûû        ', '±±±±±±±±±', 1eh, 1fh, 4 DUP(09h), 'ÎÎ'
-
 
 end start
