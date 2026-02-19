@@ -6,14 +6,14 @@ STR_BEF_FRAME	equ 10d
 
 STRING_COLOR	equ 9eh
 FRAME_HOR_COL	equ 8ah
-FRAME_WALL_COL	equ 8ah
+FRAME_WALL_COL	equ 8eh
 INT_FRAME_COL	equ 8ch		; color of internal frame
-STR_BOUND_COL	equ 8ah
+STR_BOUND_COL	equ 89h
 
-BYTE_SHIFT		equ 8h
-SYMB_OFFSET		equ 2d
-ARGUE_SIZE		equ 2h
-END_CODE		equ 4c00h
+BYTE_SHIFT	equ 8h
+SYMB_OFFSET	equ 2d
+ARGUE_SIZE	equ 2h
+END_CODE	equ 4c00h
 ES_STR_DELTA	equ 10d		; delta for ES to change string
 VMEM_ADDRESS	equ 0b800h
 
@@ -45,6 +45,7 @@ Main		proc
 
   		push bx			; save index of string's begin
 		mov bx, offset FRAME_TYPES
+		add bx, ax
 		sal ax, 4d
 		add bx, ax		; setting type of frame
 
@@ -76,9 +77,10 @@ Main		proc
 ;=====================================================
 PrintBdString	proc
 
-		push bx
 		mov ah, STR_BOUND_COL
 		mov al, [bx]
+		inc bx
+		push bx
 		stosw
 		mov ah, STRING_COLOR
 		mov bx, dx
@@ -634,7 +636,7 @@ Exit		proc
 		endp
 ;-----------------------------------------------------
 
-FRAME_TYPES	db 'Ä^/\\/³Ã´ÄÄÚ¿ÀÙÄ', 'ÄÄÚ¿ÀÙ³Ã´ÄÄÚ¿ÀÙÄ', 'ûûûûûûûûû       ', '±±±±±±±±±', 1eh, 1fh, 4 DUP(09h), 'Î'
+FRAME_TYPES	db 'ÄÄ/\\/³Ã´ÄÄÚ¿ÀÙÄÄ', '²²²²²²²²²°°°°°°²²', 'ûûûûûûûûû        ', '±±±±±±±±±', 1eh, 1fh, 4 DUP(09h), 'ÎÎ'
 
 
 end start
