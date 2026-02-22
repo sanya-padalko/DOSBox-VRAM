@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    02/23/26 01:57:31	    Page 1
+Turbo Assembler	 Version 4.1	    02/23/26 02:02:51	    Page 1
 test_dri.asm
 
 
@@ -9,7 +9,7 @@ test_dri.asm
       4
       5	0100  8C C8		     start:	     mov ax, cs
       6	0102  8E C0				     mov es, ax
-      7	0104  BF 0162r				     mov di, offset Old09Ofs
+      7	0104  BF 015Dr				     mov di, offset Old09Ofs
       8	0107  B8 0000				     mov ax, 0h
       9	010A  8E D8				     mov ds, ax
      10	010C  BE 0024				     mov si, 4 * 09h		     ; offset:segment -> 4 bytes
@@ -28,7 +28,7 @@ test_dri.asm
      23	0126  CD 09				     int 09h
      24
      25	0128  B8 3100				     mov ax, 3100h
-     26	012B  BA 0169r				     mov dx, offset Eoppp
+     26	012B  BA 0164r				     mov dx, offset Eoppp
      27	012E  D1 EA D1 EA D1 EA	D1+		     shr dx, 4h
      28	      EA
      29	0136  42				     inc dx
@@ -37,42 +37,39 @@ test_dri.asm
      32	0139			     New09	     proc
      33	0139  50 53 06				     push ax bx	es
      34
-     35	013C  E4 60				     in	al, 60h
-     36	013E  3C 02				     cmp al, 02h
-     37	0140  75 0E				     jne empty
-     38
-     39	0142  B8 B800				     mov ax, 0b800h
-     40	0145  8E C0				     mov es, ax
-     41	0147  BB 0320				     mov bx, 320h
-     42	014A  B8 CE03				     mov ax, 0ce03h
-     43	014D  26: 89 07				     mov es:[bx], ax
-     44
-     45	0150  E4 61			     empty:  in	al, 61h
-     46	0152  24 7F				     and al, not 80h
-     47	0154  E6 61				     out 61h, al
-     48	0156  0C 80				     or	al, 80h
-     49	0158  E6 61				     out 61h, al
+     35	013C  B8 B800				     mov ax, 0b800h
+     36	013F  8E C0				     mov es, ax
+     37	0141  E4 60				     in	al, 60h
+     38	0143  B4 CE				     mov ah, 0ceh
+     39	0145  BB 0320				     mov bx, 320h
+     40	0148  26: 89 07				     mov es:[bx], ax
+     41
+     42	014B  E4 61				     in	al, 61h
+     43	014D  24 7F				     and al, not 80h
+     44	014F  E6 61				     out 61h, al
+     45	0151  0C 80				     or	al, 80h
+     46	0153  E6 61				     out 61h, al
+     47
+     48	0155  B0 20				     mov al, 20h
+     49	0157  E6 20				     out 20h, al
      50
-     51	015A  B0 20				     mov al, 20h
-     52	015C  E6 20				     out 20h, al
-     53
-     54	015E  07 5B 58				     pop es bx ax
-     55	0161  EA		     nxt_jmp	     db	0eah
-     56	0162  0000		     Old09Ofs	     dw	0
-     57	0164  0000		     Old09Seg	     dw	0
-Turbo Assembler	 Version 4.1	    02/23/26 01:57:31	    Page 2
+     51	0159  07 5B 58				     pop es bx ax
+     52	015C  EA		     nxt_jmp	     db	0eah
+     53	015D  0000		     Old09Ofs	     dw	0
+     54	015F  0000		     Old09Seg	     dw	0
+     55
+     56	0161  07 5B 58				     pop es bx ax
+     57	0164					     endp
+Turbo Assembler	 Version 4.1	    02/23/26 02:02:51	    Page 2
 test_dri.asm
 
 
 
      58
-     59	0166  07 5B 58				     pop es bx ax
-     60	0169					     endp
-     61
-     62	0169			     Eoppp:
-     63
-     64				     end start
-Turbo Assembler	 Version 4.1	    02/23/26 01:57:31	    Page 3
+     59	0164			     Eoppp:
+     60
+     61				     end start
+Turbo Assembler	 Version 4.1	    02/23/26 02:02:51	    Page 3
 Symbol Table
 
 
@@ -82,7 +79,7 @@ Symbol Name			  Type	 Value
 
 ??DATE				  Text	 "02/23/26"
 ??FILENAME			  Text	 "test_dri"
-??TIME				  Text	 "01:57:31"
+??TIME				  Text	 "02:02:51"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
 @CODE				  Text	 DGROUP
@@ -96,17 +93,16 @@ Symbol Name			  Type	 Value
 @MODEL				  Text	 1
 @STACK				  Text	 DGROUP
 @WORDSIZE			  Text	 2
-EMPTY				  Near	 DGROUP:0150
-EOPPP				  Near	 DGROUP:0169
+EOPPP				  Near	 DGROUP:0164
 NEW09				  Near	 DGROUP:0139
-NXT_JMP				  Byte	 DGROUP:0161
-OLD09OFS			  Word	 DGROUP:0162
-OLD09SEG			  Word	 DGROUP:0164
+NXT_JMP				  Byte	 DGROUP:015C
+OLD09OFS			  Word	 DGROUP:015D
+OLD09SEG			  Word	 DGROUP:015F
 START				  Near	 DGROUP:0100
 
 Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  0169 Word	  Public  CODE
+  _TEXT				  16  0164 Word	  Public  CODE
 

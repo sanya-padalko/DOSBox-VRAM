@@ -31,17 +31,14 @@ start:		mov ax, cs
 New09		proc
 		push ax bx es
 
-		in al, 60h
-		cmp al, 02h
-		jne empty
-
 		mov ax, 0b800h
 		mov es, ax
+		in al, 60h
+		mov ah, 0ceh
 		mov bx, 320h
-		mov ax, 0ce03h
 		mov es:[bx], ax
 
-	empty:	in al, 61h
+		in al, 61h
 		and al, not 80h
 		out 61h, al
 		or al, 80h
