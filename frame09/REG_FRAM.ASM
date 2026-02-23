@@ -16,7 +16,9 @@ ARGUE_SIZE	equ 2h
 END_CODE	equ 4c00h
 ES_STR_DELTA	equ 10d		; delta for ES to change string
 VMEM_ADDRESS	equ 0b800h
+
 NULL_CODE	equ 30h
+ALPH_ADD_CODE	equ 37h
 
 FRAME_LODSB	macro			; AL = next frame symbol, and increase BX
 		mov al, [bx]
@@ -95,25 +97,9 @@ Frame		proc
 		mov ch, 0h
 	        mov bx, offset String
 		
-		mov dl, al
-		and dl, 0fh
-		add dl, NULL_CODE
-		mov byte ptr [bx + 7], dl
-		shr al, 4d 
-		mov dl, al
-		and dl, 0fh
-		add dl, NULL_CODE
-		mov byte ptr [bx + 6], dl
-		shr al, 4d
-		mov dl, al
-		and dl, 0fh
-		add dl, NULL_CODE
-		mov byte ptr [bx + 5], dl
-		shr al, 4d
-		mov dl, al
-		and dl, 0fh
-		add dl, NULL_CODE
-		mov byte ptr [bx + 4], dl 
+		push ax
+		call PrintReg 
+		pop ax
 		mov ax, 0h
 
   		push bx			; save index of string's begin
@@ -133,6 +119,51 @@ Frame		proc
 		call PrintBdString
 
         	pop si ds di es dx cx bx ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:[stack]	value of register
+;
+; Result:	value will print in string
+;	   !!!	VALUE WILL DELETED FROM STACK !!!
+;
+; Expected:	(DS:)[BX] = index of output's start
+;
+; Destruction:	DL
+;=====================================================
+PrintReg	proc 	value
+		push bp
+		mov bp, sp
+
+		push ax
+		mov ax, value
+		mov dh, 4h
+		add bx, 7h
+
+	@@digit:
+		mov dl, al
+		and dl, 0fh
+		cmp dl, 0ah
+		jnl @@ab_9
+
+		add dl, NULL_CODE
+		jmp @@com_part
+	@@ab_9:
+		add dl, ALPH_ADD_CODE 
+@@com_part:
+		mov byte ptr [bx], dl
+		shr ax, 4h
+		dec bx
+		dec dh
+		jne @@digit
+
+		add bx, -3h
+		pop ax
+		pop bp
 		ret
 		endp
 ;-----------------------------------------------------
