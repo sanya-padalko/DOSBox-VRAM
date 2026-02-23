@@ -24,8 +24,55 @@ FRAME_LODSB	macro			; AL = next frame symbol, and increase BX
 
 locals @@
 
-start: 		call Frame
-		call Exit
+start:		mov ax, cs
+       		mov es, ax
+		mov di, offset Old09Ofs
+		mov ax, 0h
+		mov ds, ax
+		mov si, 4 * 09h			; offset:segment -> 4 bytes
+		movsw
+		movsw				; saving Old 09 Address
+
+		mov ax, 0h
+		mov es, ax
+		mov bx, 4 * 09h
+		cli
+		mov es:[bx], offset New09
+		mov ax, cs
+		mov es:[bx + 2], ax
+		sti
+
+		int 09h
+
+		mov ax, 3100h
+		mov dx, offset Eoppp
+		shr dx, 4h
+		inc dx
+		int 21h
+
+New09		proc
+		push ax bx es
+
+        in al, 60h
+        cmp al, 13h
+        jne @@exit
+		call Frame
+
+@@exit:	in al, 61h
+		and al, not 80h
+		out 61h, al
+		or al, 80h
+		out 61h, al
+
+		mov al, 20h
+		out 20h, al
+
+		pop es bx ax
+    		db 0eah
+Old09Ofs	dw 0
+Old09Seg	dw 0
+
+		endp
 
 
 ;=====================================================
@@ -35,18 +82,18 @@ start: 		call Frame
 ;
 ; Expected:	-
 ;
-; Destruction:	AX, BX, CX, DX, ES, DI, DS, SI, CL
+; Destruction:	AX, BX, CX, DX, ES, DI, DS, SI
 ;=====================================================
 Frame		proc
+        	push ax bx cx dx es di ds si
 
-		mov bx, 81h
-		call SkipSpaces
-		call GetNumber		; AX = type of frame
-		call SkipSpaces
-		mov si, 80h
-		mov cl, byte ptr [si]
-		sub cx, bx
-		add cx, 81h		; real size of string
+        	push cs
+		pop ds	
+
+        	mov ax, 0h
+        	mov cl, 9h
+        	mov ch, 0h
+	        mov bx, offset String
 
   		push bx			; save index of string's begin
 		mov bx, offset FRAME_TYPES
@@ -64,6 +111,7 @@ Frame		proc
 		pop dx
 		call PrintBdString
 
+        	pop si ds di es dx cx bx ax
 		ret
 		endp
 ;-----------------------------------------------------
@@ -633,5 +681,9 @@ FRAME_TYPES	db 'ÄÄ/\\/³Ã´ÄÄÚ¿ÀÙÄÄ'
 		db '²²²²²²²²²°°°°°°²²'
 		db 'ûûûûûûûûû        '
 		db '±±±±±±±±±', 1eh, 1fh, 4 DUP(09h), 'ÎÎ'
+
+String  	db 'coca cola espuma'
+
+Eoppp:
 
 end start
