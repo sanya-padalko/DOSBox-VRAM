@@ -31,12 +31,7 @@ start:		mov ax, cs
 New09		proc
 		push ax bx es
 
-		mov ax, 0b800h
-		mov es, ax
-		in al, 60h
-		mov ah, 0ceh
-		mov bx, 320h
-		mov es:[bx], ax
+		call printing
 
 		in al, 61h
 		and al, not 80h
@@ -53,6 +48,20 @@ Old09Ofs	dw 0
 Old09Seg	dw 0
 
 		pop es bx ax
+		endp
+
+printing	proc
+		push ax bx es
+
+		mov ax, 0b800h
+		mov es, ax
+		in al, 60h
+		mov ah, 0ceh
+		mov bx, 320h
+		mov es:[bx], ax
+
+		pop es bx ax
+		ret
 		endp
 
 Eoppp:
