@@ -16,6 +16,7 @@ ARGUE_SIZE	equ 2h
 END_CODE	equ 4c00h
 ES_STR_DELTA	equ 10d		; delta for ES to change string
 VMEM_ADDRESS	equ 0b800h
+NULL_CODE	equ 30h
 
 FRAME_LODSB	macro			; AL = next frame symbol, and increase BX
 		mov al, [bx]
@@ -53,12 +54,12 @@ start:		mov ax, cs
 New09		proc
 		push ax bx es
 
-        in al, 60h
-        cmp al, 13h
-        jne @@exit
+		in al, 60h
+		cmp al, 13h
+		jne @@exit
 		call Frame
 
-@@exit:	in al, 61h
+  @@exit:	in al, 61h
 		and al, not 80h
 		out 61h, al
 		or al, 80h
@@ -85,15 +86,35 @@ Old09Seg	dw 0
 ; Destruction:	AX, BX, CX, DX, ES, DI, DS, SI
 ;=====================================================
 Frame		proc
-        	push ax bx cx dx es di ds si
+		push ax bx cx dx es di ds si
 
-        	push cs
-		pop ds	
+		push cs
+		pop ds
 
-        	mov ax, 0h
-        	mov cl, 9h
-        	mov ch, 0h
+		mov cl, 9h
+		mov ch, 0h
 	        mov bx, offset String
+		
+		mov dl, al
+		and dl, 0fh
+		add dl, NULL_CODE
+		mov byte ptr [bx + 7], dl
+		shr al, 4d 
+		mov dl, al
+		and dl, 0fh
+		add dl, NULL_CODE
+		mov byte ptr [bx + 6], dl
+		shr al, 4d
+		mov dl, al
+		and dl, 0fh
+		add dl, NULL_CODE
+		mov byte ptr [bx + 5], dl
+		shr al, 4d
+		mov dl, al
+		and dl, 0fh
+		add dl, NULL_CODE
+		mov byte ptr [bx + 4], dl 
+		mov ax, 0h
 
   		push bx			; save index of string's begin
 		mov bx, offset FRAME_TYPES
@@ -682,7 +703,7 @@ FRAME_TYPES	db 'ÄÄ/\\/³Ã´ÄÄÚ¿ÀÙÄÄ'
 		db 'ûûûûûûûûû        '
 		db '±±±±±±±±±', 1eh, 1fh, 4 DUP(09h), 'ÎÎ'
 
-String  	db 'coca cola espuma'
+String  	db '³AX:', 0h, 0h, 0h, 0h, '³'
 
 Eoppp:
 
