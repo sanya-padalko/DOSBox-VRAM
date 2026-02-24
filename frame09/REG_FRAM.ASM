@@ -19,8 +19,10 @@ VMEM_ADDRESS	equ 0b800h
 
 NULL_CODE	equ 30h
 ALPH_ADD_CODE	equ 37h
+PRINT_REG_KEY	equ 36h
+PRINT_REG_LEN	equ 9h
 
-FRAME_LODSB	macro			; AL = next frame symbol, and increase BX
+FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
 		mov al, [bx]
 		inc bx
 		endm
@@ -53,11 +55,23 @@ start:		mov ax, cs
 		inc dx
 		int 21h
 
+;=====================================================
+; !!! NEW CODE FOR 09 INTERRUPTING !!!
+;
+; Entry:	-
+;
+; Result:	printed value of register in frame (if al = PRINT_REG_KEY)
+;		- (else)
+;
+; Expected:	-
+;
+; Destruction:	-
+;=====================================================
 New09		proc
 		push ax bx es
 
 		in al, 60h
-		cmp al, 13h
+		cmp al, PRINT_REG_KEY
 		jne @@exit
 		call Frame
 
@@ -76,6 +90,8 @@ Old09Ofs	dw 0
 Old09Seg	dw 0
 
 		endp
+;-----------------------------------------------------
+
 
 
 ;=====================================================
@@ -93,11 +109,26 @@ Frame		proc
 		push cs
 		pop ds
 
-		mov cl, 9h
+		cmp al, 1eh
+		je @@regA
+		cmp al, 30h
+		je @@regB
+		jmp @@regB
+
+	@@regA:	push ax
+		mov bx, offset String
+		mov byte ptr [bx + 1], 'A'
+		jmp @@set
+
+	@@regB:	push bx
+		mov bx, offset String
+		mov byte ptr [bx + 1], 'B'
+		jmp @@set
+		
+	@@set:	mov cl, PRINT_REG_LEN
 		mov ch, 0h
 	        mov bx, offset String
 		
-		push ax
 		call PrintReg 
 		pop ax
 		mov ax, 0h
@@ -129,7 +160,7 @@ Frame		proc
 ; Entry:[stack]	value of register
 ;
 ; Result:	value will print in string
-;	   !!!	VALUE WILL DELETED FROM STACK !!!
+;	   !!!	VALUE WON'T DELETED FROM STACK !!!
 ;
 ; Expected:	(DS:)[BX] = index of output's start
 ;
