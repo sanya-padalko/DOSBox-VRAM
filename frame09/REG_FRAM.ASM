@@ -19,12 +19,20 @@ VMEM_ADDRESS	equ 0b800h
 
 NULL_CODE	equ 30h
 ALPH_ADD_CODE	equ 37h
-PRINT_REG_KEY	equ 36h
+ADX_KEY		equ 57h
+SEG_KEY		equ 58h
 PRINT_REG_LEN	equ 9h
 
 FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
 		mov al, [bx]
 		inc bx
+		endm
+
+REG_PRINT	macro reg
+		push reg
+		call PrintReg
+		pop ax
+		add bx, 9h
 		endm
 
 locals @@
@@ -60,7 +68,7 @@ start:		mov ax, cs
 ;
 ; Entry:	-
 ;
-; Result:	printed value of register in frame (if al = PRINT_REG_KEY)
+; Result:	printed value of register in frame (if al = ADX_KEY)
 ;		- (else)
 ;
 ; Expected:	-
@@ -68,12 +76,21 @@ start:		mov ax, cs
 ; Destruction:	-
 ;=====================================================
 New09		proc
-		push ax bx es
+		push es bx ax
 
+		jmp @@check
+  @@frame:	pop ax
+		call SavingRegs
+		push ax
 		in al, 60h
-		cmp al, PRINT_REG_KEY
-		jne @@exit
 		call Frame
+		jmp @@exit
+
+  @@check:	in al, 60h
+		cmp al, ADX_KEY
+		je @@frame
+		cmp al, SEG_KEY
+		je @@frame
 
   @@exit:	in al, 61h
 		and al, not 80h
@@ -84,11 +101,49 @@ New09		proc
 		mov al, 20h
 		out 20h, al
 
-		pop es bx ax
+		pop ax bx es
     		db 0eah
 Old09Ofs	dw 0
 Old09Seg	dw 0
 
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	-
+;
+; Result:	registers printed in REG_VIEWS
+;
+; Expected:	-
+;
+; Destruction:	-
+;=====================================================
+SavingRegs	proc
+
+		push ax
+		push bx
+		mov bx, offset AX_VIEW
+		push ax
+		call PrintReg
+		pop ax
+		add bx, 9h
+		
+		call PrintReg		; old BX is already in stack
+		add bx, 9h
+
+		REG_PRINT cx
+		REG_PRINT dx
+		REG_PRINT ds
+		REG_PRINT es
+		REG_PRINT cs
+		REG_PRINT si
+		REG_PRINT di
+
+		pop bx
+		pop ax
+		ret
 		endp
 ;-----------------------------------------------------
 
@@ -102,35 +157,30 @@ Old09Seg	dw 0
 ; Expected:	-
 ;
 ; Destruction:	AX, BX, CX, DX, ES, DI, DS, SI
-;=====================================================
+;==================================================
 Frame		proc
 		push ax bx cx dx es di ds si
 
 		push cs
 		pop ds
 
-		cmp al, 1eh
+		cmp al, 57h
 		je @@regA
-		cmp al, 30h
+		cmp al, 58h
 		je @@regB
-		jmp @@regB
-
-	@@regA:	push ax
-		mov bx, offset String
-		mov byte ptr [bx + 1], 'A'
+		mov bx, offset AX_VIEW
 		jmp @@set
 
-	@@regB:	push bx
-		mov bx, offset String
-		mov byte ptr [bx + 1], 'B'
+	@@regA:
+		mov bx, offset AX_VIEW
 		jmp @@set
-		
+
+	@@regB:	
+		mov bx, offset BX_VIEW
+		jmp @@set
+
 	@@set:	mov cl, PRINT_REG_LEN
 		mov ch, 0h
-	        mov bx, offset String
-		
-		call PrintReg 
-		pop ax
 		mov ax, 0h
 
   		push bx			; save index of string's begin
@@ -184,9 +234,9 @@ PrintReg	proc 	value
 		add dl, NULL_CODE
 		jmp @@com_part
 	@@ab_9:
-		add dl, ALPH_ADD_CODE 
+		add dl, ALPH_ADD_CODE
 @@com_part:
-		mov byte ptr [bx], dl
+		mov byte ptr cs:[bx], dl
 		shr ax, 4h
 		dec bx
 		dec dh
@@ -765,7 +815,19 @@ FRAME_TYPES	db 'ÄÄ/\\/³Ã´ÄÄÚ¿ÀÙÄÄ'
 		db 'ûûûûûûûûû        '
 		db '±±±±±±±±±', 1eh, 1fh, 4 DUP(09h), 'ÎÎ'
 
-String  	db '³AX:', 0h, 0h, 0h, 0h, '³'
+AX_VIEW  	db '³AX:', 4 DUP (0h), '³'
+BX_VIEW  	db '³BX:', 4 DUP (0h), '³'
+CX_VIEW  	db '³CX:', 4 DUP (0h), '³'
+DX_VIEW  	db '³DX:', 4 DUP (0h), '³'
+
+SI_VIEW  	db '³SI:', 4 DUP (0h), '³'
+DI_VIEW  	db '³DI:', 4 DUP (0h), '³'
+
+DS_VIEW  	db '³DS:', 4 DUP (0h), '³'
+ES_VIEW  	db '³ES:', 4 DUP (0h), '³'
+CS_VIEW  	db '³CS:', 4 DUP (0h), '³'
+
+end_of_prog:				; for page navigation
 
 Eoppp:
 
