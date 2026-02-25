@@ -23,7 +23,7 @@ ADX_KEY		equ 57h
 SEG_KEY		equ 58h
 IND_KEY		equ 29h
 ALL_KEY		equ 2bh
-ESC_KEY		equ 01h
+ESC_KEY		equ 36h
 PRINT_REG_LEN	equ 9h
 
 FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
@@ -64,8 +64,6 @@ start:		mov ax, cs
 		mov ax, cs
 		mov es:[bx + 2], ax
 		sti
-
-		int 09h
 
 		mov ax, 3100h
 		mov dx, offset Eoppp
@@ -108,6 +106,9 @@ New09		proc
 		je @@frame
 		cmp al, ALL_KEY
 		je @@frame
+		cmp al, ESC_KEY
+		je @@frame
+		jmp @@not_s
 
   @@exit:	in al, 61h
 		and al, not 80h
@@ -115,7 +116,7 @@ New09		proc
 		or al, 80h
 		out 61h, al
 
-		mov al, 20h
+  @@not_s:	mov al, 20h
 		out 20h, al
 
 		pop ax bx es
@@ -177,15 +178,9 @@ SavingRegs	proc
 ;=====================================================
 SavingMem	proc
 
-		push es
-		push di
-		push ax
-		push cx
-		push bx
-		push si
-		push di
+		push es ax cx bx si di
 
-		mov ax, 13d
+		mov ax, 26d
 		mov cx, 11d
 		mov bx, offset ESC_SAVE
 		dec bx
@@ -194,7 +189,7 @@ SavingMem	proc
 		inc bx
 		mov si, ax
 		mov al, es:[di]
-		mov [bx], al
+		mov cs:[bx], al
 		mov ax, si
 		dec ax
 		jne @@next
@@ -202,7 +197,7 @@ SavingMem	proc
 		je @@saved
 		mov ax, 1d
 		call ChangeString
-		mov ax, 13d
+		mov ax, 26d
 		pop di
 		push di
 		jmp @@saving
@@ -211,13 +206,7 @@ SavingMem	proc
 		jmp @@saving
 
   @@saved:
-		pop di
-		pop si
-		pop bx
-		pop cx
-		pop ax
-		pop es
-		pop di
+		pop di si bx cx ax es
 
 		ret
 		endp
@@ -229,15 +218,9 @@ SavingMem	proc
 ;
 ;=====================================================
 PrintMem	proc
-		push es
-		push di
-		push ax
-		push cx
-		push bx
-		push si
-		push di
+		push es ax cx bx si di
 
-		mov ax, 13d
+		mov ax, 26d
 		mov cx, 11d
 		mov bx, offset ESC_SAVE
 		dec bx
@@ -254,7 +237,7 @@ PrintMem	proc
 		je @@printed
 		mov ax, 1d
 		call ChangeString
-		mov ax, 13d
+		mov ax, 26d
 		pop di
 		push di
 		jmp @@printing
@@ -263,12 +246,7 @@ PrintMem	proc
 		jmp @@printing
 
   @@printed:
-		pop di
-		pop bx
-		pop cx
-		pop ax
-		pop di
-		pop es
+		pop di si bx cx ax es
 
 		ret
 		endp
@@ -293,7 +271,7 @@ Frame		proc
 
 		call RegSettings
 		push bx			; saving start of register group
-		;push ax
+		push ax
 
 	@@set:	mov cl, PRINT_REG_LEN
 		mov ch, 0h
@@ -309,10 +287,14 @@ Frame		proc
 		add cl, 2d
 		call CalcOffset
 
-		;pop ax
-		;cmp al, ESC_KEY
-		;je @@end_frame
-		;call SavingMem
+		pop ax
+		cmp al, ESC_KEY
+		jne @@not_esc
+		call PrintMem
+		pop bx
+		jmp @@end_frame
+
+@@not_esc:	call SavingMem
 
 		call DrawExtFrame
 		call DrawIntFrame
@@ -332,7 +314,8 @@ Frame		proc
 		dec ax
 		jne @@print_str
 
-@@end_frame:       	pop si ds di es dx cx bx ax
+@@end_frame:
+		pop si ds di es dx cx bx ax
 		ret
 		endp
 ;-----------------------------------------------------
@@ -380,7 +363,7 @@ RegSettings	proc
 		mov word ptr [REG_COUNT], 9h
 		mov bx, offset AX_VIEW
 
-@@end:	ret
+@@end:		ret
 		endp
 ;-----------------------------------------------------
 
@@ -1013,10 +996,9 @@ DI_VIEW  	db '³DI:', 4 DUP (0h), '³'
 DS_VIEW  	db '³DS:', 4 DUP (0h), '³'
 ES_VIEW  	db '³ES:', 4 DUP (0h), '³'
 CS_VIEW  	db '³CS:', 4 DUP (0h), '³'
-
 REG_COUNT	dw 0h, 0h
 
-ESC_SAVE	db 150 DUP (0h)
+ESC_SAVE	db 300 DUP (0h)
 
 end_of_prog:				; for page navigation
 
