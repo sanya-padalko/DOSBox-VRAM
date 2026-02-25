@@ -21,6 +21,7 @@ NULL_CODE	equ 30h
 ALPH_ADD_CODE	equ 37h
 ADX_KEY		equ 57h
 SEG_KEY		equ 58h
+IND_KEY		equ 29h
 PRINT_REG_LEN	equ 9h
 
 FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
@@ -37,6 +38,8 @@ REG_PRINT	macro reg
 
 locals @@
 
+;=====================================================
+;=====================================================
 start:		mov ax, cs
        		mov es, ax
 		mov di, offset Old09Ofs
@@ -62,6 +65,9 @@ start:		mov ax, cs
 		shr dx, 4h
 		inc dx
 		int 21h
+;-----------------------------------------------------
+
+
 
 ;=====================================================
 ; !!! NEW CODE FOR 09 INTERRUPTING !!!
@@ -90,6 +96,8 @@ New09		proc
 		cmp al, ADX_KEY
 		je @@frame
 		cmp al, SEG_KEY
+		je @@frame
+		cmp al, IND_KEY
 		je @@frame
 
   @@exit:	in al, 61h
@@ -165,25 +173,34 @@ Frame		proc
 		pop ds
 
 		cmp al, 57h
-		je @@regA
+		je @@regADX
 		cmp al, 58h
-		je @@regB
+		je @@regSEG
+		cmp al, 29h
+		je @@regIND
+		mov word ptr [REG_COUNT], 1h
 		mov bx, offset AX_VIEW
 		jmp @@set
 
-	@@regA:
+	@@regADX:
+		mov word ptr [REG_COUNT], 4h
 		mov bx, offset AX_VIEW
 		jmp @@set
 
-	@@regB:	
-		mov bx, offset BX_VIEW
+	@@regSEG:	
+		mov word ptr [REG_COUNT], 3h
+		mov bx, offset DS_VIEW
 		jmp @@set
+
+	@@regIND:
+		mov word ptr [REG_COUNT], 2h
+		mov bx, offset SI_VIEW
 
 	@@set:	mov cl, PRINT_REG_LEN
 		mov ch, 0h
 		mov ax, 0h
+		push bx			; saving start of register group
 
-  		push bx			; save index of string's begin
 		mov bx, offset FRAME_TYPES
 		add bx, ax
 		sal ax, 4d
@@ -197,7 +214,20 @@ Frame		proc
 		call DrawExtFrame
 		call DrawIntFrame
 		pop dx
+		mov ax, REG_COUNT
+
+@@print_str:	
+		push ax
 		call PrintBdString
+		add dx, PRINT_REG_LEN
+		dec bx			; return to string bound symbols
+		dec bx			;
+		sub di, 2 * (PRINT_REG_LEN + 2)
+		mov ax, 1h
+		call ChangeString
+		pop ax
+		dec ax
+		jne @@print_str
 
         	pop si ds di es dx cx bx ax
 		ret
@@ -265,12 +295,14 @@ PrintBdString	proc
 
 		mov ah, STR_BOUND_COL
 		FRAME_LODSB
-		push bx
 		stosw
+		push dx
+		push bx
 		mov ah, STRING_COLOR
 		mov bx, dx
 		call PrintString
 		pop bx
+		pop dx
 		mov ah, STR_BOUND_COL
 		FRAME_LODSB
 		stosw
@@ -322,16 +354,20 @@ PrintString	proc
 ; Result:	External frame will be drawing
 ;		ES:[DI]	= old ES:[DI] shifted to the right down diagonally
 ;		CX	= len of string inside frame
+;		[BX]	= upleft angle of internal frame
 ;
 ; Expected:	ES:[DI]	= right shift and offset
+;		[BX]	= upleft angle of external frame
 ;
 ; Destruction:	AX, BX, CX, DX, DI, SI, ES
 ;=====================================================
 DrawExtFrame	proc
 
-		mov ah, FRAME_HOR_COL
-		push 3h				; empty_strings
+		mov ax, word ptr [REG_COUNT]
+		add ax, 2h
+		push ax				; empty_strings
 		push cx				; len of hor line
+		mov ah, FRAME_HOR_COL
 		FRAME_LODSB
 		push ax
 		FRAME_LODSB
@@ -341,8 +377,10 @@ DrawExtFrame	proc
 		mov ax, 1d
 		call ChangeString
 
-		mov ah, FRAME_WALL_COL
+		mov ax, word ptr [REG_COUNT]
+		add ax, 2h
 		push cx
+		push ax
 		call DrawWalls			; external frame's walls
 		sub cx, 2d
 		add di, SYMB_OFFSET
@@ -365,7 +403,7 @@ DrawExtFrame	proc
 DrawIntFrame	proc
 
 		mov ah, INT_FRAME_COL
-		push 1h
+		push REG_COUNT
 		push cx
 		FRAME_LODSB
 		push ax
@@ -386,53 +424,52 @@ DrawIntFrame	proc
 ; Entry:	AX 		= wall's symbol
 ;		BX 		= left central wall's symbol
 ;		CX 		= right central wall's symbol
-;	[stack]	len 	= length of skipped symbols between walls
+;	[stack]	len 		= length of skipped symbols between walls
+;	[stack]	cnt		= count of walls
 ;
-; Result:	BX = index of first unused frame symbol
+; Result:	BX 		= index of first unused frame symbol
 ;		(exp.: [BX] = upleft angle of int. frame)
-;		SI 	= wall's symbol
-;		BX 	= AX
-;		CX 	= len
+;		SI 		= wall's symbol
+;		BX 		= AX
+;		CX 		= len
 ;
-; Expected:	DI 		 = right offset
-;			[BX]	 = wall's symbol
-;			[BX + 1] = central right wall symbol
-;			[BX + 2] = central left wall symbol
+; Expected:	DI 		= right offset
+;		[BX]	 	= wall's symbol
+;		[BX + 1] 	= central right wall symbol
+;		[BX + 2] 	= central left wall symbol
 ;
 ; Distruction:	BX, SI, CX
 ;=====================================================
-DrawWalls	proc	len
+DrawWalls	proc	cnt, len
 		push bp
 		mov bp, sp
 
+		push dx
 		mov ah, FRAME_WALL_COL
-		FRAME_LODSB			; draw first walls
+		FRAME_LODSB
 		mov si, ax
+		mov dx, cnt
+
+	@@wall:
+		mov ax, si
 		mov cx, ax
 		push len
 		call DrawEmpWalls
 		mov ax, 1d
 		call ChangeString
+		dec dx
+		jne @@wall
 
-		mov ah, FRAME_WALL_COL
-		FRAME_LODSB			; draw second walls
-		mov ch, FRAME_WALL_COL
-		mov cl, [bx]
-		inc bx
-		push len
-		call DrawEmpWalls
-		mov ax, 1d
+		mov ax, 0h
+		sub ax, cnt
 		call ChangeString
 
-		mov ax, si			; draw third walls
-		mov cx, si
-		push len
-		call DrawEmpWalls
-		mov ax, -2d
-		call ChangeString
-
-		pop bp				; stack clearing
+		pop dx
+		add bx, 2h
+	
+		pop bp	
 		pop ax
+		pop cx
 		pop cx
 		push ax
 		mov ax, dx
@@ -448,7 +485,7 @@ DrawWalls	proc	len
 ;	[stack]	len 	= count of empty symbols between walls
 ;
 ; Result:	AX 	= returning address
-; 		CX = 2 * len
+; 		CX 	= 2 * len
 ;
 ; Expected:	DI	= right offset
 ;
@@ -826,6 +863,8 @@ DI_VIEW  	db '³DI:', 4 DUP (0h), '³'
 DS_VIEW  	db '³DS:', 4 DUP (0h), '³'
 ES_VIEW  	db '³ES:', 4 DUP (0h), '³'
 CS_VIEW  	db '³CS:', 4 DUP (0h), '³'
+
+REG_COUNT	dw 0h, 0h
 
 end_of_prog:				; for page navigation
 
