@@ -30,7 +30,7 @@ FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
 		inc bx
 		endm
 
-REG_PRINT	macro reg
+REG_PRINT	macro reg	; saved reg value, [bx] = next reg, ax = reg
 		push reg
 		call PrintReg
 		pop ax
@@ -40,6 +40,11 @@ REG_PRINT	macro reg
 locals @@
 
 ;=====================================================
+; Entry:	-
+;
+; Result:	In int[09] saved new address
+;
+; Expected:	Old int[09] = original int[09] (from DOS) 
 ;=====================================================
 start:		mov ax, cs
        		mov es, ax
@@ -167,7 +172,7 @@ SavingRegs	proc
 ;
 ; Expected:	-
 ;
-; Destruction:	AX, BX, CX, DX, ES, DI, DS, SI
+; Destruction:	-
 ;==================================================
 Frame		proc
 		push ax bx cx dx es di ds si
