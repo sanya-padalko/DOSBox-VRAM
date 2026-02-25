@@ -22,6 +22,7 @@ ALPH_ADD_CODE	equ 37h
 ADX_KEY		equ 57h
 SEG_KEY		equ 58h
 IND_KEY		equ 29h
+ALL_KEY		equ 2bh
 PRINT_REG_LEN	equ 9h
 
 FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
@@ -99,6 +100,8 @@ New09		proc
 		je @@frame
 		cmp al, IND_KEY
 		je @@frame
+		cmp al, ALL_KEY
+		je @@frame
 
   @@exit:	in al, 61h
 		and al, not 80h
@@ -137,7 +140,7 @@ SavingRegs	proc
 		call PrintReg
 		pop ax
 		add bx, 9h
-		
+
 		call PrintReg		; old BX is already in stack
 		add bx, 9h
 
@@ -172,34 +175,12 @@ Frame		proc
 		push cs
 		pop ds
 
-		cmp al, 57h
-		je @@regADX
-		cmp al, 58h
-		je @@regSEG
-		cmp al, 29h
-		je @@regIND
-		mov word ptr [REG_COUNT], 1h
-		mov bx, offset AX_VIEW
-		jmp @@set
-
-	@@regADX:
-		mov word ptr [REG_COUNT], 4h
-		mov bx, offset AX_VIEW
-		jmp @@set
-
-	@@regSEG:	
-		mov word ptr [REG_COUNT], 3h
-		mov bx, offset DS_VIEW
-		jmp @@set
-
-	@@regIND:
-		mov word ptr [REG_COUNT], 2h
-		mov bx, offset SI_VIEW
+		call RegSettings
+		push bx			; saving start of register group
 
 	@@set:	mov cl, PRINT_REG_LEN
 		mov ch, 0h
 		mov ax, 0h
-		push bx			; saving start of register group
 
 		mov bx, offset FRAME_TYPES
 		add bx, ax
@@ -216,7 +197,7 @@ Frame		proc
 		pop dx
 		mov ax, REG_COUNT
 
-@@print_str:	
+@@print_str:
 		push ax
 		call PrintBdString
 		add dx, PRINT_REG_LEN
@@ -231,6 +212,55 @@ Frame		proc
 
         	pop si ds di es dx cx bx ax
 		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	AL	  = pressed key
+;
+; Result:	BX	  = right offset (on the begin of reg's views)
+;	[var]	REG_COUNT = right count of regs (from 1 to 4)
+;
+; Expected:	REG_COUNT - word variable
+;
+; Destruction:	BX
+;=====================================================
+RegSettings	proc
+
+		cmp al, ADX_KEY
+		je @@regADX
+		cmp al, SEG_KEY
+		je @@regSEG
+		cmp al, IND_KEY
+		je @@regIND
+		cmp al, ALL_KEY
+		je @@regALL
+		mov word ptr [REG_COUNT], 1h
+		mov bx, offset AX_VIEW
+		jmp @@end
+
+	@@regADX:
+		mov word ptr [REG_COUNT], 4h
+		mov bx, offset AX_VIEW
+		jmp @@end
+
+	@@regSEG:
+		mov word ptr [REG_COUNT], 3h
+		mov bx, offset DS_VIEW
+		jmp @@end
+
+	@@regIND:
+		mov word ptr [REG_COUNT], 2h
+		mov bx, offset SI_VIEW
+		jmp @@end
+
+	@@regALL:
+		mov word ptr [REG_COUNT], 9h
+		mov bx, offset AX_VIEW
+
+@@end:	ret
 		endp
 ;-----------------------------------------------------
 
@@ -466,8 +496,8 @@ DrawWalls	proc	cnt, len
 
 		pop dx
 		add bx, 2h
-	
-		pop bp	
+
+		pop bp
 		pop ax
 		pop cx
 		pop cx
