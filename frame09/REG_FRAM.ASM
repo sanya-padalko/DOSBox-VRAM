@@ -4,11 +4,11 @@ org 100h
 
 STR_BEF_FRAME	equ 10d
 
-STRING_COLOR	equ 9eh
-FRAME_HOR_COL	equ 8ah
-FRAME_WALL_COL	equ 8eh
-INT_FRAME_COL	equ 8ch		; color of internal frame
-STR_BOUND_COL	equ 89h
+STRING_COLOR	equ 1eh
+FRAME_HOR_COL	equ 0ah
+FRAME_WALL_COL	equ 0eh
+INT_FRAME_COL	equ 0ch		; color of internal frame
+STR_BOUND_COL	equ 09h
 
 BYTE_SHIFT	equ 8h
 SYMB_OFFSET	equ 2d
@@ -23,6 +23,7 @@ ADX_KEY		equ 57h
 SEG_KEY		equ 58h
 IND_KEY		equ 29h
 ALL_KEY		equ 2bh
+ESC_KEY		equ 01h
 PRINT_REG_LEN	equ 9h
 
 FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
@@ -44,7 +45,7 @@ locals @@
 ;
 ; Result:	In int[09] saved new address
 ;
-; Expected:	Old int[09] = original int[09] (from DOS) 
+; Expected:	Old int[09] = original int[09] (from DOS)
 ;=====================================================
 start:		mov ax, cs
        		mov es, ax
@@ -168,6 +169,116 @@ SavingRegs	proc
 ;=====================================================
 ; Entry:	-
 ;
+; Result:	in ESC_SAVE[] saved old video memory (in place of frame)
+;
+; Expected:	ES:[DI]	= right offset and shift
+;
+; Destruction:	-
+;=====================================================
+SavingMem	proc
+
+		push es
+		push di
+		push ax
+		push cx
+		push bx
+		push si
+		push di
+
+		mov ax, 13d
+		mov cx, 11d
+		mov bx, offset ESC_SAVE
+		dec bx
+
+  @@saving:
+		inc bx
+		mov si, ax
+		mov al, es:[di]
+		mov [bx], al
+		mov ax, si
+		dec ax
+		jne @@next
+		dec cx
+		je @@saved
+		mov ax, 1d
+		call ChangeString
+		mov ax, 13d
+		pop di
+		push di
+		jmp @@saving
+
+	@@next:	inc di
+		jmp @@saving
+
+  @@saved:
+		pop di
+		pop si
+		pop bx
+		pop cx
+		pop ax
+		pop es
+		pop di
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+;
+;=====================================================
+PrintMem	proc
+		push es
+		push di
+		push ax
+		push cx
+		push bx
+		push si
+		push di
+
+		mov ax, 13d
+		mov cx, 11d
+		mov bx, offset ESC_SAVE
+		dec bx
+
+  @@printing:
+		inc bx
+		mov si, ax
+		mov al, [bx]
+		mov es:[di], al
+		mov ax, si
+		dec ax
+		jne @@next
+		dec cx
+		je @@printed
+		mov ax, 1d
+		call ChangeString
+		mov ax, 13d
+		pop di
+		push di
+		jmp @@printing
+
+	@@next:	inc di
+		jmp @@printing
+
+  @@printed:
+		pop di
+		pop bx
+		pop cx
+		pop ax
+		pop di
+		pop es
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	-
+;
 ; Result:	Program executed
 ;
 ; Expected:	-
@@ -182,6 +293,7 @@ Frame		proc
 
 		call RegSettings
 		push bx			; saving start of register group
+		;push ax
 
 	@@set:	mov cl, PRINT_REG_LEN
 		mov ch, 0h
@@ -196,6 +308,11 @@ Frame		proc
 		call SkipStrings
 		add cl, 2d
 		call CalcOffset
+
+		;pop ax
+		;cmp al, ESC_KEY
+		;je @@end_frame
+		;call SavingMem
 
 		call DrawExtFrame
 		call DrawIntFrame
@@ -215,7 +332,7 @@ Frame		proc
 		dec ax
 		jne @@print_str
 
-        	pop si ds di es dx cx bx ax
+@@end_frame:       	pop si ds di es dx cx bx ax
 		ret
 		endp
 ;-----------------------------------------------------
@@ -242,8 +359,6 @@ RegSettings	proc
 		je @@regIND
 		cmp al, ALL_KEY
 		je @@regALL
-		mov word ptr [REG_COUNT], 1h
-		mov bx, offset AX_VIEW
 		jmp @@end
 
 	@@regADX:
@@ -900,6 +1015,8 @@ ES_VIEW  	db '³ES:', 4 DUP (0h), '³'
 CS_VIEW  	db '³CS:', 4 DUP (0h), '³'
 
 REG_COUNT	dw 0h, 0h
+
+ESC_SAVE	db 150 DUP (0h)
 
 end_of_prog:				; for page navigation
 
