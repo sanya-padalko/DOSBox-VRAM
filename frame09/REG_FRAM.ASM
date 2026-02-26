@@ -2,7 +2,7 @@
 .code
 org 100h
 
-STR_BEF_FRAME	equ 10d
+STR_BEF_FRAME	equ 6d
 
 STRING_COLOR	equ 1eh
 FRAME_HOR_COL	equ 0ah
@@ -87,9 +87,12 @@ start:		mov ax, cs
 ; Destruction:	-
 ;=====================================================
 New09		proc
-		push es bx ax
+		call GetIp		;saving ip
 
+	save_ip:
+		push es bx ax
 		jmp @@check
+
   @@frame:	pop ax
 		call SavingRegs
 		push ax
@@ -120,10 +123,24 @@ New09		proc
 		out 20h, al
 
 		pop ax bx es
+		add sp, 1d * 2h
     		db 0eah
 Old09Ofs	dw 0
 Old09Seg	dw 0
 
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Saving on the top os stack (ip value + 3)
+;=====================================================
+GetIp		proc
+
+		jmp save_ip
+
+		ret
 		endp
 ;-----------------------------------------------------
 
@@ -153,11 +170,21 @@ SavingRegs	proc
 
 		REG_PRINT cx
 		REG_PRINT dx
+		REG_PRINT si
+		REG_PRINT di
+		REG_PRINT bp
+		mov ax, sp
+		add ax, 3d * 2h
+		REG_PRINT ax
 		REG_PRINT ds
 		REG_PRINT es
 		REG_PRINT cs
-		REG_PRINT si
-		REG_PRINT di
+		push bp
+		mov bp, sp
+		mov ax, [bp + 8]
+		sub ax, 3d		; intstr. call size
+		pop bp
+		REG_PRINT ax
 
 		pop bx
 		pop ax
@@ -181,7 +208,7 @@ SavingMem	proc
 		push es ax cx bx si di
 
 		mov ax, 26d
-		mov cx, 11d
+		mov cx, 10h
 		mov bx, offset ESC_SAVE
 		dec bx
 
@@ -221,7 +248,7 @@ PrintMem	proc
 		push es ax cx bx si di
 
 		mov ax, 26d
-		mov cx, 11d
+		mov cx, 10h
 		mov bx, offset ESC_SAVE
 		dec bx
 
@@ -271,7 +298,7 @@ Frame		proc
 
 		call RegSettings
 		push bx			; saving start of register group
-		push ax
+		push ax			; saving key
 
 	@@set:	mov cl, PRINT_REG_LEN
 		mov ch, 0h
@@ -350,17 +377,17 @@ RegSettings	proc
 		jmp @@end
 
 	@@regSEG:
-		mov word ptr [REG_COUNT], 3h
+		mov word ptr [REG_COUNT], 4h
 		mov bx, offset DS_VIEW
 		jmp @@end
 
 	@@regIND:
-		mov word ptr [REG_COUNT], 2h
+		mov word ptr [REG_COUNT], 4h
 		mov bx, offset SI_VIEW
 		jmp @@end
 
 	@@regALL:
-		mov word ptr [REG_COUNT], 9h
+		mov word ptr [REG_COUNT], 0ch
 		mov bx, offset AX_VIEW
 
 @@end:		ret
@@ -992,13 +1019,16 @@ DX_VIEW  	db '³DX:', 4 DUP (0h), '³'
 
 SI_VIEW  	db '³SI:', 4 DUP (0h), '³'
 DI_VIEW  	db '³DI:', 4 DUP (0h), '³'
+BP_VIEW  	db '³BP:', 4 DUP (0h), '³'
+SP_VIEW  	db '³SP:', 4 DUP (0h), '³'
 
 DS_VIEW  	db '³DS:', 4 DUP (0h), '³'
 ES_VIEW  	db '³ES:', 4 DUP (0h), '³'
 CS_VIEW  	db '³CS:', 4 DUP (0h), '³'
+IP_VIEW  	db '³IP:', 4 DUP (0h), '³'
 REG_COUNT	dw 0h, 0h
 
-ESC_SAVE	db 300 DUP (0h)
+ESC_SAVE	db 390 DUP (0h)
 
 end_of_prog:				; for page navigation
 
