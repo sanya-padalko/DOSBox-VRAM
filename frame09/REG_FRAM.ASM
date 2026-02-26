@@ -26,6 +26,10 @@ ALL_KEY		equ 2bh
 ESC_KEY		equ 36h
 PRINT_REG_LEN	equ 9h
 
+FRAME_WIDTH	equ 26d
+FRAME_HEIGHT	equ 10h
+FRAME_TYPE	equ 0h
+
 FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
 		mov al, [bx]
 		inc bx
@@ -46,6 +50,8 @@ locals @@
 ; Result:	In int[09] saved new address
 ;
 ; Expected:	Old int[09] = original int[09] (from DOS)
+;
+; Destruction:	AX, BX, ES, DI
 ;=====================================================
 start:		mov ax, cs
        		mov es, ax
@@ -134,7 +140,7 @@ Old09Seg	dw 0
 
 
 ;=====================================================
-; Saving on the top os stack (ip value + 3)
+; Saving (ip value + 3) on the top of stack
 ;=====================================================
 GetIp		proc
 
@@ -197,94 +203,7 @@ SavingRegs	proc
 ;=====================================================
 ; Entry:	-
 ;
-; Result:	in ESC_SAVE[] saved old video memory (in place of frame)
-;
-; Expected:	ES:[DI]	= right offset and shift
-;
-; Destruction:	-
-;=====================================================
-SavingMem	proc
-
-		push es ax cx bx si di
-
-		mov ax, 26d
-		mov cx, 10h
-		mov bx, offset ESC_SAVE
-		dec bx
-
-  @@saving:
-		inc bx
-		mov si, ax
-		mov al, es:[di]
-		mov cs:[bx], al
-		mov ax, si
-		dec ax
-		jne @@next
-		dec cx
-		je @@saved
-		mov ax, 1d
-		call ChangeString
-		mov ax, 26d
-		pop di
-		push di
-		jmp @@saving
-
-	@@next:	inc di
-		jmp @@saving
-
-  @@saved:
-		pop di si bx cx ax es
-
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-;
-;=====================================================
-PrintMem	proc
-		push es ax cx bx si di
-
-		mov ax, 26d
-		mov cx, 10h
-		mov bx, offset ESC_SAVE
-		dec bx
-
-  @@printing:
-		inc bx
-		mov si, ax
-		mov al, [bx]
-		mov es:[di], al
-		mov ax, si
-		dec ax
-		jne @@next
-		dec cx
-		je @@printed
-		mov ax, 1d
-		call ChangeString
-		mov ax, 26d
-		pop di
-		push di
-		jmp @@printing
-
-	@@next:	inc di
-		jmp @@printing
-
-  @@printed:
-		pop di si bx cx ax es
-
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-; Entry:	-
-;
-; Result:	Program executed
+; Result:	frame will be drawn
 ;
 ; Expected:	-
 ;
@@ -302,7 +221,7 @@ Frame		proc
 
 	@@set:	mov cl, PRINT_REG_LEN
 		mov ch, 0h
-		mov ax, 0h
+		mov ax, FRAME_TYPE
 
 		mov bx, offset FRAME_TYPES
 		add bx, ax
@@ -343,6 +262,99 @@ Frame		proc
 
 @@end_frame:
 		pop si ds di es dx cx bx ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	-
+;
+; Result:	in ESC_SAVE[] saved old video memory (in place of frame)
+;
+; Expected:	ES:[DI]	= right offset and shift
+;
+; Destruction:	-
+;=====================================================
+SavingMem	proc
+
+		push es ax cx bx si di
+
+		mov ax, FRAME_WIDTH
+		mov cx, FRAME_HEIGHT
+		mov bx, offset ESC_SAVE
+		dec bx
+
+  @@saving:
+		inc bx
+		mov si, ax
+		mov al, es:[di]
+		mov cs:[bx], al
+		mov ax, si
+		dec ax
+		jne @@next
+		dec cx
+		je @@saved
+		mov ax, 1d
+		call ChangeString
+		mov ax, FRAME_WIDTH
+		pop di
+		push di
+		jmp @@saving
+
+	@@next:	inc di
+		jmp @@saving
+
+  @@saved:
+		pop di si bx cx ax es
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	-
+;
+; Result:	in video memory printed ESC_SAVE[]
+;
+; Expected:	ES:[DI] = right shift and offset
+;
+; Destruction:	-
+;=====================================================
+PrintMem	proc
+		push es ax cx bx si di
+
+		mov ax, FRAME_WIDTH
+		mov cx, FRAME_HEIGHT
+		mov bx, offset ESC_SAVE
+		dec bx
+
+  @@printing:
+		inc bx
+		mov si, ax
+		mov al, [bx]
+		mov es:[di], al
+		mov ax, si
+		dec ax
+		jne @@next
+		dec cx
+		je @@printed
+		mov ax, 1d
+		call ChangeString
+		mov ax, FRAME_WIDTH
+		pop di
+		push di
+		jmp @@printing
+
+	@@next:	inc di
+		jmp @@printing
+
+  @@printed:
+		pop di si bx cx ax es
+
 		ret
 		endp
 ;-----------------------------------------------------
@@ -582,8 +594,6 @@ DrawIntFrame	proc
 
 ;=====================================================
 ; Entry:	AX 		= wall's symbol
-;		BX 		= left central wall's symbol
-;		CX 		= right central wall's symbol
 ;	[stack]	len 		= length of skipped symbols between walls
 ;	[stack]	cnt		= count of walls
 ;
@@ -995,8 +1005,11 @@ SkipSpaces	proc
 
 ;=====================================================
 ; Entry:	-
+;
 ; Result:	Program ended
+;
 ; Expected:	-
+;
 ; Destruction:	AX
 ;=====================================================
 Exit		proc
@@ -1028,7 +1041,7 @@ CS_VIEW  	db '³CS:', 4 DUP (0h), '³'
 IP_VIEW  	db '³IP:', 4 DUP (0h), '³'
 REG_COUNT	dw 0h, 0h
 
-ESC_SAVE	db 390 DUP (0h)
+ESC_SAVE	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
 
 end_of_prog:				; for page navigation
 
