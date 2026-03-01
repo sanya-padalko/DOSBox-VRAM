@@ -24,11 +24,6 @@ start:
 		cmp al, STOP_KEY
 		je @@end_loop
 		
-		in al, 61h
-		or al, 80h
-		out 61h, al
-		and al, not 80h
-		out 61h, al
 		jmp @@looop
 
 @@end_loop:	in al, 61h

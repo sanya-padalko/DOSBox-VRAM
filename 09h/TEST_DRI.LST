@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    03/01/26 13:01:04	    Page 1
+Turbo Assembler	 Version 4.1	    03/02/26 02:13:01	    Page 1
 test_dri.asm
 
 
@@ -27,23 +27,18 @@ test_dri.asm
      22	0115			     @@looop:
      23	0115  E4 60				     in	al, 60h
      24	0117  3C 01				     cmp al, STOP_KEY
-     25	0119  74 0C				     je	@@end_loop
+     25	0119  74 02				     je	@@end_loop
      26
-     27	011B  E4 61				     in	al, 61h
-     28	011D  0C 80				     or	al, 80h
-     29	011F  E6 61				     out 61h, al
-     30	0121  24 7F				     and al, not 80h
-     31	0123  E6 61				     out 61h, al
-     32	0125  EB EE				     jmp @@looop
-     33
-     34	0127  E4 61		     @@end_loop:     in	al, 61h
-     35	0129  0C 80				     or	al, 80h
-     36	012B  E6 61				     out 61h, al
-     37	012D  24 7F				     and al, not 80h
-     38	012F  E6 61				     out 61h, al
-     39
-     40				     end start
-Turbo Assembler	 Version 4.1	    03/01/26 13:01:04	    Page 2
+     27	011B  EB F8				     jmp @@looop
+     28
+     29	011D  E4 61		     @@end_loop:     in	al, 61h
+     30	011F  0C 80				     or	al, 80h
+     31	0121  E6 61				     out 61h, al
+     32	0123  24 7F				     and al, not 80h
+     33	0125  E6 61				     out 61h, al
+     34
+     35				     end start
+Turbo Assembler	 Version 4.1	    03/02/26 02:13:01	    Page 2
 Symbol Table
 
 
@@ -51,12 +46,12 @@ Symbol Table
 
 Symbol Name			  Type	 Value
 
-??DATE				  Text	 "03/01/26"
+??DATE				  Text	 "03/02/26"
 ??FILENAME			  Text	 "test_dri"
-??TIME				  Text	 "13:01:04"
+??TIME				  Text	 "02:13:01"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
-@@END_LOOP			  Near	 DGROUP:0127
+@@END_LOOP			  Near	 DGROUP:011D
 @@FIRST_LOOP			  Near	 DGROUP:0100
 @@LOOOP				  Near	 DGROUP:0115
 @@SET				  Near	 DGROUP:0108
@@ -79,5 +74,5 @@ Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  0131 Word	  Public  CODE
+  _TEXT				  16  0127 Word	  Public  CODE
 
