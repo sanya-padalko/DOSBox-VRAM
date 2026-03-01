@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    02/23/26 12:00:28	    Page 1
+Turbo Assembler	 Version 4.1	    03/01/26 13:01:04	    Page 1
 test_dri.asm
 
 
@@ -7,78 +7,43 @@ test_dri.asm
       2	0000			     .code
       3				     org 100h
       4
-      5	0100  8C C8		     start:	     mov ax, cs
-      6	0102  8E C0				     mov es, ax
-      7	0104  BF 0151r				     mov di, offset Old09Ofs
-      8	0107  B8 0000				     mov ax, 0h
-      9	010A  8E D8				     mov ds, ax
-     10	010C  BE 0024				     mov si, 4 * 09h		     ; offset:segment -> 4 bytes
-     11	010F  A5				     movsw
-     12	0110  A5				     movsw			     ; saving Old 09 Address
-     13
-     14	0111  B8 0000				     mov ax, 0h
-     15	0114  8E C0				     mov es, ax
-     16	0116  BB 0024				     mov bx, 4 * 09h
-     17	0119  FA				     cli
-     18	011A  26: C7 07	0139r			     mov es:[bx], offset New09
-     19	011F  8C C8				     mov ax, cs
-     20	0121  26: 89 47	02			     mov es:[bx	+ 2], ax
-     21	0125  FB				     sti
-     22
-     23	0126  CD 09				     int 09h
-     24
-     25	0128  B8 3100				     mov ax, 3100h
-     26	012B  BA 016Er				     mov dx, offset Eoppp
-     27	012E  D1 EA D1 EA D1 EA	D1+		     shr dx, 4h
-     28	      EA
-     29	0136  42				     inc dx
-     30	0137  CD 21				     int 21h
-     31
-     32	0139			     New09	     proc
-     33	0139  50 53 06				     push ax bx	es
-     34
-     35	013C  E8 0019				     call printing
-     36
-     37	013F  E4 61				     in	al, 61h
-     38	0141  24 7F				     and al, not 80h
-     39	0143  E6 61				     out 61h, al
-     40	0145  0C 80				     or	al, 80h
-     41	0147  E6 61				     out 61h, al
-     42
-     43	0149  B0 20				     mov al, 20h
-     44	014B  E6 20				     out 20h, al
-     45
-     46	014D  07 5B 58				     pop es bx ax
-     47	0150  EA		     nxt_jmp	     db	0eah
-     48	0151  0000		     Old09Ofs	     dw	0
-     49	0153  0000		     Old09Seg	     dw	0
-     50
-     51	0155  07 5B 58				     pop es bx ax
-     52	0158					     endp
-     53
-     54	0158			     printing	     proc
-     55	0158  50 53 06				     push ax bx	es
-     56
-     57	015B  B8 B800				     mov ax, 0b800h
-Turbo Assembler	 Version 4.1	    02/23/26 12:00:28	    Page 2
-test_dri.asm
-
-
-
-     58	015E  8E C0				     mov es, ax
-     59	0160  E4 60				     in	al, 60h
-     60	0162  B4 CE				     mov ah, 0ceh
-     61	0164  BB 0320				     mov bx, 320h
-     62	0167  26: 89 07				     mov es:[bx], ax
-     63
-     64	016A  07 5B 58				     pop es bx ax
-     65	016D  C3				     ret
-     66	016E					     endp
-     67
-     68	016E			     Eoppp:
-     69
-     70				     end start
-Turbo Assembler	 Version 4.1	    02/23/26 12:00:28	    Page 3
+      5	      =0025		     START_KEY	     equ 25h
+      6	      =0001		     STOP_KEY	     equ 01h
+      7
+      8	0100			     start:
+      9	0100			       @@first_loop:
+     10	0100  E4 60				     in	al, 60h
+     11	0102  3C 25				     cmp al, START_KEY
+     12	0104  74 02				     je	@@set
+     13	0106  EB F8				     jmp @@first_loop
+     14
+     15	0108				     @@set:
+     16	0108  B0 00				     mov al, 0h
+     17	010A  B4 01				     mov ah, 1h
+     18	010C  BB 0200				     mov bx, 200h
+     19	010F  B9 0300				     mov cx, 300h
+     20	0112  BA 0400				     mov dx, 400h
+     21
+     22	0115			     @@looop:
+     23	0115  E4 60				     in	al, 60h
+     24	0117  3C 01				     cmp al, STOP_KEY
+     25	0119  74 0C				     je	@@end_loop
+     26
+     27	011B  E4 61				     in	al, 61h
+     28	011D  0C 80				     or	al, 80h
+     29	011F  E6 61				     out 61h, al
+     30	0121  24 7F				     and al, not 80h
+     31	0123  E6 61				     out 61h, al
+     32	0125  EB EE				     jmp @@looop
+     33
+     34	0127  E4 61		     @@end_loop:     in	al, 61h
+     35	0129  0C 80				     or	al, 80h
+     36	012B  E6 61				     out 61h, al
+     37	012D  24 7F				     and al, not 80h
+     38	012F  E6 61				     out 61h, al
+     39
+     40				     end start
+Turbo Assembler	 Version 4.1	    03/01/26 13:01:04	    Page 2
 Symbol Table
 
 
@@ -86,11 +51,15 @@ Symbol Table
 
 Symbol Name			  Type	 Value
 
-??DATE				  Text	 "02/23/26"
+??DATE				  Text	 "03/01/26"
 ??FILENAME			  Text	 "test_dri"
-??TIME				  Text	 "12:00:28"
+??TIME				  Text	 "13:01:04"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
+@@END_LOOP			  Near	 DGROUP:0127
+@@FIRST_LOOP			  Near	 DGROUP:0100
+@@LOOOP				  Near	 DGROUP:0115
+@@SET				  Near	 DGROUP:0108
 @CODE				  Text	 DGROUP
 @CODESIZE			  Text	 0
 @CPU				  Text	 0101H
@@ -102,17 +71,13 @@ Symbol Name			  Type	 Value
 @MODEL				  Text	 1
 @STACK				  Text	 DGROUP
 @WORDSIZE			  Text	 2
-EOPPP				  Near	 DGROUP:016E
-NEW09				  Near	 DGROUP:0139
-NXT_JMP				  Byte	 DGROUP:0150
-OLD09OFS			  Word	 DGROUP:0151
-OLD09SEG			  Word	 DGROUP:0153
-PRINTING			  Near	 DGROUP:0158
 START				  Near	 DGROUP:0100
+START_KEY			  Number 0025
+STOP_KEY			  Number 0001
 
 Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  016E Word	  Public  CODE
+  _TEXT				  16  0131 Word	  Public  CODE
 
