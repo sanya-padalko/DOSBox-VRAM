@@ -34,7 +34,7 @@ FRAME_HEIGHT	equ 10h
 FRAME_TYPE	equ 0h
 
 FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
-		mov al, [bx]
+		mov al, byte ptr cs:[bx]
 		inc bx
 		endm
 
@@ -89,6 +89,8 @@ start:		call DrawFrame
 		mov es:[bx + 2], ax
 		sti
 
+		int 08h
+
 		mov ax, 3100h
 		mov dx, offset Eoppp
 		shr dx, 4h
@@ -103,7 +105,10 @@ start:		call DrawFrame
 ;=====================================================
 New08		proc
 
-		cmp IS_FRAME, 1h
+		push ax bx cx dx es ds si di
+		push cs
+		pop ds
+		cmp cs:[IS_FRAME], 1h
 		je @@redr
 		jmp @@noth
 
@@ -117,9 +122,11 @@ New08		proc
 		mov al, 20h
 		out 20h, al
 
+		pop di si ds es dx cx bx ax
 		db 0eah
 Old08Ofs	dw 0
 Old08Seg	dw 0
+		ret
 		endp
 ;-----------------------------------------------------
 
@@ -307,17 +314,17 @@ TurnOffFrame	proc
 RedrawFrame	proc
 		push ax bx dx es di
 
-		mov ax, X_FRAME
+		mov ax, word ptr cs:[X_FRAME]
 		call SkipStrings
-		mov di, Y_FRAME
+		mov di, word ptr cs:[Y_FRAME]
 		sal di, 1d				; set es:[di]
 		call SaveDiff				; VMEM - DRAW
 
 		call UpdateFrame			; DRAW
 
-		mov ax, X_FRAME
+		mov ax, word ptr cs:[X_FRAME]
 		call SkipStrings
-		mov di, Y_FRAME
+		mov di, word ptr cs:[Y_FRAME]
 		sal di, 1d				; set es:[di]
 		mov bx, offset DRAW_BUF
 		mov cx, FRAME_WIDTH * FRAME_HEIGHT	; DRAW -> VMEM
@@ -350,9 +357,9 @@ SaveDiff	proc
 		inc bx
 		push ax
 		mov al, es:[di]
-		cmp byte ptr [DRAW_BUF + bx], al
+		cmp byte ptr cs:[DRAW_BUF + bx], al
 		je @@cont
-		mov byte ptr [SAVE_BUF + bx], al
+		mov byte ptr cs:[SAVE_BUF + bx], al
 
 	@@cont:
 		pop ax
@@ -642,33 +649,33 @@ DrawFrame	proc
 RegSettings	proc
 
 		jmp @@regALL
-		cmp byte ptr [KEY_TYPE], ADX_KEY
+		cmp byte ptr cs:[KEY_TYPE], ADX_KEY
 		je @@regADX
-		cmp byte ptr [KEY_TYPE], SEG_KEY
+		cmp byte ptr cs:[KEY_TYPE], SEG_KEY
 		je @@regSEG
-		cmp byte ptr [KEY_TYPE], IND_KEY
+		cmp byte ptr cs:[KEY_TYPE], IND_KEY
 		je @@regIND
-		cmp byte ptr [KEY_TYPE], ALL_KEY
+		cmp byte ptr cs:[KEY_TYPE], ALL_KEY
 		je @@regALL
 		jmp @@regALL
 
 	@@regADX:
-		mov word ptr [REG_COUNT], 0ch
+		mov word ptr cs:[REG_COUNT], 0ch
 		mov bx, offset AX_VIEW
 		jmp @@end
 
 	@@regSEG:
-		mov word ptr [REG_COUNT], 4h
+		mov word ptr cs:[REG_COUNT], 4h
 		mov bx, offset DS_VIEW
 		jmp @@end
 
 	@@regIND:
-		mov word ptr [REG_COUNT], 4h
+		mov word ptr cs:[REG_COUNT], 4h
 		mov bx, offset SI_VIEW
 		jmp @@end
 
 	@@regALL:
-		mov word ptr [REG_COUNT], 0ch
+		mov word ptr cs:[REG_COUNT], 0ch
 		mov bx, offset AX_VIEW
 
 @@end:		ret
@@ -728,7 +735,9 @@ PrintBdString	proc
 ; Destruction:	DI, SI, AL, DX
 ;=====================================================
 PrintString	proc
-
+		push ds
+		push cs
+		pop ds
 		mov si, bx
 		mov dx, cx
 
@@ -738,6 +747,7 @@ PrintString	proc
 		dec dx
 		jne @@print
 
+		pop ds
 		ret
 		endp
 ;-----------------------------------------------------
@@ -1273,7 +1283,7 @@ REG_COUNT	dw 0ch
 KEY_TYPE	db ADX_KEY
 X_FRAME		dw 0h
 Y_FRAME		dw 0h
-IS_FRAME	db 0h
+IS_FRAME	db 1h
 
 SAVE_BUF	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
 DRAW_BUF	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
