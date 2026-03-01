@@ -99,7 +99,9 @@ New09		proc
 		call GetIp		;saving ip
 
 	save_ip:
-		push es bx ax
+		push ds es bx ax
+		push cs
+		pop ds
 		jmp @@check
 
   @@frame:	mov [KEY_TYPE], al
@@ -107,16 +109,31 @@ New09		proc
 		call SavingRegs
 		push ax
 		in al, 60h
-		call Frame
+		call UpdateFrame
+		call DrawFrame
+		push bx cx es di
+		mov ax, X_FRAME
+		call SkipStrings
+		mov di, Y_FRAME
+		sal di, 1d
+		mov bx, offset DRAW_BUF
+		mov cx, FRAME_WIDTH * FRAME_HEIGHT
+		call PrintToMem
+		mov ax, X_FRAME
+		add ax, 3d
+		call SkipStrings
+		mov di, 160h
+		mov es:[di], 4e03h
+		pop di es cx bx
 		jmp @@exit
 
-  @@up:		dec word ptr cs:[X_FRAME]
+  @@up:		dec X_FRAME
 		jmp @@frame2
-  @@dn:		inc word ptr cs:[X_FRAME]
+  @@dn:		inc X_FRAME
 		jmp @@frame2
-  @@left:	dec word ptr cs:[Y_FRAME]
+  @@left:	dec Y_FRAME
 		jmp @@frame2
-  @@right:	inc word ptr cs:[Y_FRAME]
+  @@right:	inc Y_FRAME
 		jmp @@frame2
 
   @@check:	in al, 60h
@@ -149,7 +166,7 @@ New09		proc
   @@not_s:	mov al, 20h
 		out 20h, al
 
-		pop ax bx es
+		pop ax bx es ds
 		add sp, 1d * 2h
     		db 0eah
 Old09Ofs	dw 0
@@ -222,219 +239,6 @@ SavingRegs	proc
 
 
 ;=====================================================
-; Entry:	-
-;
-; Result:	frame will be drawn
-;
-; Expected:	-
-;
-; Destruction:	-
-;==================================================
-Frame		proc
-		push ax bx cx dx es di ds si
-
-		push cs
-		pop ds
-
-		call RegSettings
-		push bx			; saving start of register group
-		push ax			; saving key
-
-	@@set:	mov cl, PRINT_REG_LEN
-		mov ch, 0h
-		mov ax, FRAME_TYPE
-
-		mov bx, offset FRAME_TYPES
-		add bx, ax
-		sal ax, 4d
-		add bx, ax		; setting type of frame
-
-		mov ax, X_FRAME
-		call SkipStrings
-		add cl, 2d
-		mov ax, Y_FRAME
-		mov di, ax
-		sal di, 1d
-
-		pop ax
-		cmp al, ESC_KEY
-		jne @@not_esc
-		call PrintMem
-		pop bx
-		jmp @@end_frame
-
-@@not_esc:	call SavingMem
-
-		call DrawExtFrame
-		call DrawIntFrame
-		pop dx
-		mov ax, REG_COUNT
-
-@@print_str:
-		push ax
-		call PrintBdString
-		add dx, PRINT_REG_LEN
-		dec bx			; return to string bound symbols
-		dec bx			;
-		mov di, Y_FRAME
-		inc di
-		sal di, 1d
-		mov ax, 1h
-		call ChangeString
-		pop ax
-		dec ax
-		jne @@print_str
-
-@@end_frame:
-		pop si ds di es dx cx bx ax
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-; Entry:	-
-;
-; Result:	in ESC_SAVE[] saved old video memory (in place of frame)
-;
-; Expected:	ES:[DI]	= right offset and shift
-;
-; Destruction:	-
-;=====================================================
-SavingMem	proc
-
-		push es ax cx bx si di
-
-		mov ax, FRAME_WIDTH
-		mov cx, FRAME_HEIGHT
-		mov bx, offset ESC_SAVE
-		dec bx
-
-  @@saving:
-		inc bx
-		mov si, ax
-		mov al, es:[di]
-		mov cs:[bx], al
-		mov ax, si
-		dec ax
-		jne @@next
-		dec cx
-		je @@saved
-		mov ax, 1d
-		call ChangeString
-		mov ax, FRAME_WIDTH
-		pop di
-		push di
-		jmp @@saving
-
-	@@next:	inc di
-		jmp @@saving
-
-  @@saved:
-		pop di si bx cx ax es
-
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-; Entry:	-
-;
-; Result:	in video memory printed ESC_SAVE[]
-;
-; Expected:	ES:[DI] = right shift and offset
-;
-; Destruction:	-
-;=====================================================
-PrintMem	proc
-		push es ax cx bx si di
-
-		mov ax, FRAME_WIDTH
-		mov cx, FRAME_HEIGHT
-		mov bx, offset ESC_SAVE
-		dec bx
-
-  @@printing:
-		inc bx
-		mov si, ax
-		mov al, [bx]
-		mov es:[di], al
-		mov ax, si
-		dec ax
-		jne @@next
-		dec cx
-		je @@printed
-		mov ax, 1d
-		call ChangeString
-		mov ax, FRAME_WIDTH
-		pop di
-		push di
-		jmp @@printing
-
-	@@next:	inc di
-		jmp @@printing
-
-  @@printed:
-		pop di si bx cx ax es
-
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-; Entry:	AL	  = pressed key
-;
-; Result:	BX	  = right offset (on the begin of reg's views)
-;	[var]	REG_COUNT = right count of regs (from 1 to 4)
-;
-; Expected:	REG_COUNT - word variable
-;
-; Destruction:	BX
-;=====================================================
-RegSettings	proc
-
-		cmp byte ptr [KEY_TYPE], ADX_KEY
-		je @@regADX
-		cmp byte ptr [KEY_TYPE], SEG_KEY
-		je @@regSEG
-		cmp byte ptr [KEY_TYPE], IND_KEY
-		je @@regIND
-		cmp byte ptr [KEY_TYPE], ALL_KEY
-		je @@regALL
-
-		jmp @@end
-
-	@@regADX:
-		mov word ptr [REG_COUNT], 4h
-		mov bx, offset AX_VIEW
-		jmp @@end
-
-	@@regSEG:
-		mov word ptr [REG_COUNT], 4h
-		mov bx, offset DS_VIEW
-		jmp @@end
-
-	@@regIND:
-		mov word ptr [REG_COUNT], 4h
-		mov bx, offset SI_VIEW
-		jmp @@end
-
-	@@regALL:
-		mov word ptr [REG_COUNT], 0ch
-		mov bx, offset AX_VIEW
-
-@@end:		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
 ; Entry:[stack]	value of register
 ;
 ; Result:	value will print in string
@@ -476,6 +280,257 @@ PrintReg	proc 	value
 		pop ax
 		pop bp
 		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	-
+;
+; Result:	in video memory printed ESC_SAVE[]
+;
+; Expected:	ES:[DI] = right shift and offset
+;
+; Destruction:	-
+;=====================================================
+SaveDiff	proc
+		push es ax cx bx si di
+
+		mov ax, FRAME_WIDTH
+		mov cx, FRAME_HEIGHT
+		mov bx, -1h
+
+  @@printing:
+		inc bx
+		push ax
+		mov al, es:[di]
+		cmp byte ptr [DRAW_BUF + bx], al
+		je @@cont
+		mov byte ptr [SAVE_BUF + bx], al
+
+	@@cont:
+		pop ax
+		dec ax
+		jne @@next
+		dec cx
+		je @@printed
+		mov ax, 1d
+		call ChangeString
+		mov ax, FRAME_WIDTH
+		pop di
+		push di
+		jmp @@printing
+
+	@@next:	inc di
+		jmp @@printing
+
+  @@printed:
+		pop di si bx cx ax es
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	CX	= count of symbols, which will be printed
+;		BX	= index of string's begin
+;
+; Result:	string will be printed in VMEM
+;
+; Expected:	ES:[DI]	= right shift and offset
+;
+; Destruction:	BX
+;=====================================================
+PrintToMem	proc
+		push ax es si di
+		mov si, di
+		add si, FRAME_WIDTH
+
+  @@loop:	mov al, cs:[bx]
+  		mov es:[di], al
+		inc bx
+		dec cx
+		je @@endPrint
+		inc di
+		cmp di, si
+		jne @@loop
+		mov ax, 1d
+		call ChangeString
+		pop di
+		push di
+		jmp @@loop
+
+  @@endPrint:
+		pop di si es ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; The inverse PrintToMem function
+;=====================================================
+PrintFromMem	proc
+		push ax es si di
+		mov si, di
+		add si, FRAME_WIDTH
+
+  @@loop:	mov al, es:[di]
+  		mov cs:[bx], al
+		inc bx
+		dec cx
+		je @@endPrint
+		inc di
+		cmp di, si
+		jne @@loop
+		mov ax, 1d
+		call ChangeString
+		pop di
+		push di
+
+  @@endPrint:
+		pop di si es ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+;=====================================================
+UpdateFrame	proc
+		push ax bx cx dx es di ds si
+
+		push cs
+		pop ds
+		push cs
+		pop es
+		mov di, offset DRAW_BUF
+		add di, FRAME_WIDTH
+		add di, FRAME_WIDTH
+		add di, 2d
+
+		call RegSettings
+		mov dx, bx		; [dx] = begin of first register from group
+
+		;mov ax, X_FRAME
+		;call SkipStrings
+		;mov di, Y_FRAME
+		;sal di, 1d		; setting es:[di]
+
+		mov ax, FRAME_TYPE
+		mov bx, offset FRAME_TYPES
+		add bx, ax
+		sal ax, 4d
+		add bx, ax
+		add bx, 0fh		; [bx] = string's left bound symbol
+
+		mov cl, PRINT_REG_LEN
+		mov ch, 0h
+		;add cl, 2d
+		mov ax, REG_COUNT
+
+  @@print_str:
+		push ax
+		call PrintBdString
+		add dx, PRINT_REG_LEN
+		dec bx			; return to string bound symbols
+		dec bx			;
+		add di, 4d
+		pop ax
+		dec ax
+		jne @@print_str
+
+		pop si ds di es dx cx bx ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	-
+;
+; Result:	frame will be drawn
+;
+; Expected:	-
+;
+; Destruction:	-
+;==================================================
+DrawFrame	proc
+		push ax bx cx dx es di ds si
+
+		push cs
+		pop ds
+		push cs
+		pop es
+		mov di, offset DRAW_BUF
+
+		mov ax, FRAME_TYPE
+		mov bx, offset FRAME_TYPES
+		add bx, ax
+		sal ax, 4d
+		add bx, ax		; setting type of frame
+
+		mov cx, PRINT_REG_LEN + 2h
+
+		call DrawExtFrame
+		call DrawIntFrame
+
+  @@end_draw:	pop si ds di es dx cx bx ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	AL	  = pressed key
+;
+; Result:	BX	  = right offset (on the begin of reg's views)
+;	[var]	REG_COUNT = right count of regs (from 1 to 4)
+;
+; Expected:	REG_COUNT - word variable
+;
+; Destruction:	BX
+;=====================================================
+RegSettings	proc
+
+		cmp byte ptr [KEY_TYPE], ADX_KEY
+		je @@regADX
+		cmp byte ptr [KEY_TYPE], SEG_KEY
+		je @@regSEG
+		cmp byte ptr [KEY_TYPE], IND_KEY
+		je @@regIND
+		cmp byte ptr [KEY_TYPE], ALL_KEY
+		je @@regALL
+
+		jmp @@end
+
+	@@regADX:
+		mov word ptr [REG_COUNT], 0ch
+		mov bx, offset AX_VIEW
+		jmp @@end
+
+	@@regSEG:
+		mov word ptr [REG_COUNT], 4h
+		mov bx, offset DS_VIEW
+		jmp @@end
+
+	@@regIND:
+		mov word ptr [REG_COUNT], 4h
+		mov bx, offset SI_VIEW
+		jmp @@end
+
+	@@regALL:
+		mov word ptr [REG_COUNT], 0ch
+		mov bx, offset AX_VIEW
+
+@@end:		ret
 		endp
 ;-----------------------------------------------------
 
@@ -574,8 +629,7 @@ DrawExtFrame	proc
 		push ax
 		mov cl, FRAME_HOR_COL
 		call DrawHorLines		; external frame's upside and downside
-		mov ax, 1d
-		call ChangeString
+		add di, FRAME_WIDTH
 
 		mov ax, word ptr [REG_COUNT]
 		add ax, 2h
@@ -611,8 +665,7 @@ DrawIntFrame	proc
 		push ax
 		mov cl, INT_FRAME_COL
 		call DrawHorLines		; internal frame
-		mov ax, 1d
-		call ChangeString
+		add di, FRAME_WIDTH
 
 		ret
 		endp
@@ -653,14 +706,15 @@ DrawWalls	proc	cnt, len
 		mov cx, ax
 		push len
 		call DrawEmpWalls
-		mov ax, 1d
-		call ChangeString
+		add di, FRAME_WIDTH
 		dec dx
 		jne @@wall
 
-		mov ax, 0h
-		sub ax, cnt
-		call ChangeString
+		mov ax, cnt
+	@@rets:
+		sub di, FRAME_WIDTH
+		dec ax
+		jne @@rets
 
 		pop dx
 		add bx, 2h
@@ -713,7 +767,7 @@ DrawEmpWalls	proc len
 
 
 ;=====================================================
-; Entry:	CL = color of horisontal lines (in little byte)
+; Entry:	CL 	= color of horisontal lines
 ;	[stack]	mid1	= symbol of middle of upside
 ;	[stack]	mid2	= symbol of middle of downside
 ;	[stack]	len	= len of middle part
@@ -744,10 +798,14 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 		push mid1
 		push len
 		push di
-		call BoundedHorLine
+		call BoundedHorLine	; first hotisontal line
 		mov ax, emp_str
-		add ax, 1d
-		call ChangeString	; first hor line and skipped empty strings
+		inc ax
+
+	@@loop:
+		add di, FRAME_WIDTH	; skip empty strings
+		dec ax
+		jne @@loop
 
 		mov ax, si
 		sal ax, BYTE_SHIFT
@@ -760,10 +818,12 @@ DrawHorLines	proc	mid1, mid2, len, emp_str
 		push di
 		call BoundedHorLine
 		mov ax, emp_str
-		mov cx, -1d
-		mul cx
-		sub ax, 1d
-		call ChangeString	; second hor line and returning to begin
+		inc ax
+
+	@@loop2:
+		sub di, FRAME_WIDTH	; second hor line and returning to begin
+		dec ax
+		jne @@loop2
 		mov cx, len
 
 		pop bp
@@ -1072,7 +1132,9 @@ REG_COUNT	dw 0h
 KEY_TYPE	db ADX_KEY
 X_FRAME		dw 0h
 Y_FRAME		dw 0h
-ESC_SAVE	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
+
+SAVE_BUF	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
+DRAW_BUF	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
 
 end_of_prog:				; for page navigation
 
