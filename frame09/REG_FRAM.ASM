@@ -2,8 +2,6 @@
 .code
 org 100h
 
-STR_BEF_FRAME	equ 6d
-
 STRING_COLOR	equ 1eh
 FRAME_HOR_COL	equ 0ah
 FRAME_WALL_COL	equ 0eh
@@ -19,11 +17,16 @@ VMEM_ADDRESS	equ 0b800h
 
 NULL_CODE	equ 30h
 ALPH_ADD_CODE	equ 37h
-ADX_KEY		equ 57h
-SEG_KEY		equ 58h
-IND_KEY		equ 29h
-ALL_KEY		equ 2bh
-ESC_KEY		equ 36h
+
+ADX_KEY		equ 57h			; F11
+SEG_KEY		equ 58h			; F12
+IND_KEY		equ 29h			; ` (OEM 3)
+ALL_KEY		equ 2bh			; \ (OEM 5)
+ESC_KEY		equ 36h			; RSHIFT
+UP_ARR_KEY	equ 48h
+DN_ARR_KEY	equ 50h
+LT_ARR_KEY	equ 4bh
+RT_ARR_KEY	equ 4dh
 PRINT_REG_LEN	equ 9h
 
 FRAME_WIDTH	equ 26d
@@ -99,12 +102,22 @@ New09		proc
 		push es bx ax
 		jmp @@check
 
-  @@frame:	pop ax
+  @@frame:	mov [KEY_TYPE], al
+  @@frame2:	pop ax
 		call SavingRegs
 		push ax
 		in al, 60h
 		call Frame
 		jmp @@exit
+
+  @@up:		dec word ptr cs:[X_FRAME]
+		jmp @@frame2
+  @@dn:		inc word ptr cs:[X_FRAME]
+		jmp @@frame2
+  @@left:	dec word ptr cs:[Y_FRAME]
+		jmp @@frame2
+  @@right:	inc word ptr cs:[Y_FRAME]
+		jmp @@frame2
 
   @@check:	in al, 60h
 		cmp al, ADX_KEY
@@ -117,6 +130,14 @@ New09		proc
 		je @@frame
 		cmp al, ESC_KEY
 		je @@frame
+		cmp al, UP_ARR_KEY
+		je @@up
+		cmp al, DN_ARR_KEY
+		je @@dn
+		cmp al, LT_ARR_KEY
+		je @@left
+		cmp al, RT_ARR_KEY
+		je @@right
 		jmp @@not_s
 
   @@exit:	in al, 61h
@@ -228,10 +249,12 @@ Frame		proc
 		sal ax, 4d
 		add bx, ax		; setting type of frame
 
-		mov ax, STR_BEF_FRAME
+		mov ax, X_FRAME
 		call SkipStrings
 		add cl, 2d
-		call CalcOffset
+		mov ax, Y_FRAME
+		mov di, ax
+		sal di, 1d
 
 		pop ax
 		cmp al, ESC_KEY
@@ -253,7 +276,9 @@ Frame		proc
 		add dx, PRINT_REG_LEN
 		dec bx			; return to string bound symbols
 		dec bx			;
-		sub di, 2 * (PRINT_REG_LEN + 2)
+		mov di, Y_FRAME
+		inc di
+		sal di, 1d
 		mov ax, 1h
 		call ChangeString
 		pop ax
@@ -373,14 +398,15 @@ PrintMem	proc
 ;=====================================================
 RegSettings	proc
 
-		cmp al, ADX_KEY
+		cmp byte ptr [KEY_TYPE], ADX_KEY
 		je @@regADX
-		cmp al, SEG_KEY
+		cmp byte ptr [KEY_TYPE], SEG_KEY
 		je @@regSEG
-		cmp al, IND_KEY
+		cmp byte ptr [KEY_TYPE], IND_KEY
 		je @@regIND
-		cmp al, ALL_KEY
+		cmp byte ptr [KEY_TYPE], ALL_KEY
 		je @@regALL
+
 		jmp @@end
 
 	@@regADX:
@@ -423,6 +449,7 @@ PrintReg	proc 	value
 		mov bp, sp
 
 		push ax
+		push dx
 		mov ax, value
 		mov dh, 4h
 		add bx, 7h
@@ -445,6 +472,7 @@ PrintReg	proc 	value
 		jne @@digit
 
 		add bx, -3h
+		pop dx
 		pop ax
 		pop bp
 		ret
@@ -1039,8 +1067,11 @@ DS_VIEW  	db '³DS:', 4 DUP (0h), '³'
 ES_VIEW  	db '³ES:', 4 DUP (0h), '³'
 CS_VIEW  	db '³CS:', 4 DUP (0h), '³'
 IP_VIEW  	db '³IP:', 4 DUP (0h), '³'
-REG_COUNT	dw 0h, 0h
+REG_COUNT	dw 0h
 
+KEY_TYPE	db ADX_KEY
+X_FRAME		dw 0h
+Y_FRAME		dw 0h
 ESC_SAVE	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
 
 end_of_prog:				; for page navigation
