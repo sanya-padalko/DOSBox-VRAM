@@ -56,7 +56,8 @@ locals @@
 ;
 ; Destruction:	AX, BX, ES, DI
 ;=====================================================
-start:		mov ax, cs
+start:		call DrawFrame
+		mov ax, cs
        		mov es, ax
 		mov di, offset Old09Ofs
 		mov ax, 0h
@@ -64,6 +65,11 @@ start:		mov ax, cs
 		mov si, 4 * 09h			; offset:segment -> 4 bytes
 		movsw
 		movsw				; saving Old 09 Address
+
+		mov di, offset Old08Ofs
+		mov si, 4 * 08h			; offset:segment -> 4 bytes
+		movsw
+		movsw				; saving Old 08 Address
 
 		mov ax, 0h
 		mov es, ax
@@ -74,11 +80,47 @@ start:		mov ax, cs
 		mov es:[bx + 2], ax
 		sti
 
+		mov ax, 0h
+		mov es, ax
+		mov bx, 4 * 08h
+		cli
+		mov es:[bx], offset New08
+		mov ax, cs
+		mov es:[bx + 2], ax
+		sti
+
 		mov ax, 3100h
 		mov dx, offset Eoppp
 		shr dx, 4h
 		inc dx
 		int 21h
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; !!!NEW CODE FOR 08 INTERRUPTING !!!
+;=====================================================
+New08		proc
+
+		cmp IS_FRAME, 1h
+		je @@redr
+		jmp @@noth
+
+  @@redr:
+  		call GetIp
+  save_ip:	call SavingRegs
+		add sp, 1d * 2h
+		call RedrawFrame
+
+  @@noth:
+		mov al, 20h
+		out 20h, al
+
+		db 0eah
+Old08Ofs	dw 0
+Old08Seg	dw 0
+		endp
 ;-----------------------------------------------------
 
 
@@ -96,78 +138,56 @@ start:		mov ax, cs
 ; Destruction:	-
 ;=====================================================
 New09		proc
-		call GetIp		;saving ip
 
-	save_ip:
 		push ds es bx ax
 		push cs
 		pop ds
 		jmp @@check
 
-  @@frame:	mov [KEY_TYPE], al
-  @@frame2:	pop ax
-		call SavingRegs
-		push ax
-		in al, 60h
-		call UpdateFrame
-		call DrawFrame
-		push bx cx es di
-		mov ax, X_FRAME
-		call SkipStrings
-		mov di, Y_FRAME
-		sal di, 1d
-		mov bx, offset DRAW_BUF
-		mov cx, FRAME_WIDTH * FRAME_HEIGHT
-		call PrintToMem
-		mov ax, X_FRAME
-		add ax, 3d
-		call SkipStrings
-		mov di, 160h
-		mov es:[di], 4e03h
-		pop di es cx bx
-		jmp @@exit
+  @@frame:
+  		mov [KEY_TYPE], al
+  		cmp IS_FRAME, 0h
+		je @@onfr
+		jmp exit_09
 
-  @@up:		dec X_FRAME
-		jmp @@frame2
-  @@dn:		inc X_FRAME
-		jmp @@frame2
-  @@left:	dec Y_FRAME
-		jmp @@frame2
-  @@right:	inc Y_FRAME
-		jmp @@frame2
+  @@onfr:
+  		call TurnOnFrame
+		mov IS_FRAME, 1h
+		jmp exit_09
 
-  @@check:	in al, 60h
+  @@offfr:
+  		call TurnOffFrame
+		mov IS_FRAME, 0h
+		jmp exit_09
+
+  @@check:
+  		in al, 60h
 		cmp al, ADX_KEY
 		je @@frame
-		cmp al, SEG_KEY
-		je @@frame
-		cmp al, IND_KEY
-		je @@frame
-		cmp al, ALL_KEY
-		je @@frame
 		cmp al, ESC_KEY
-		je @@frame
+		je @@offfr
 		cmp al, UP_ARR_KEY
-		je @@up
+		je arrow
 		cmp al, DN_ARR_KEY
-		je @@dn
+		je arrow
 		cmp al, LT_ARR_KEY
-		je @@left
+		je arrow
 		cmp al, RT_ARR_KEY
-		je @@right
+		je arrow
 		jmp @@not_s
 
-  @@exit:	in al, 61h
+  exit_09:
+  		in al, 61h
 		and al, not 80h
 		out 61h, al
 		or al, 80h
 		out 61h, al
 
-  @@not_s:	mov al, 20h
+  @@not_s:
+  		mov al, 20h
 		out 20h, al
 
 		pop ax bx es ds
-		add sp, 1d * 2h
     		db 0eah
 Old09Ofs	dw 0
 Old09Seg	dw 0
@@ -184,6 +204,242 @@ GetIp		proc
 
 		jmp save_ip
 
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+;=====================================================
+ProcessArrow	proc
+
+  arrow:	call TurnOffFrame
+		in al, 60h
+		cmp al, UP_ARR_KEY
+		je @@up
+		cmp al, DN_ARR_KEY
+		je @@dn
+		cmp al, LT_ARR_KEY
+		je @@left
+		cmp al, RT_ARR_KEY
+		je @@right
+
+		jmp @@arr
+
+  @@up:		dec X_FRAME
+		jmp @@arr
+  @@dn:		inc X_FRAME
+		jmp @@arr
+  @@left:	dec Y_FRAME
+		jmp @@arr
+  @@right:	inc Y_FRAME
+		jmp @@arr
+
+  @@arr:	call TurnOnFrame
+		jmp exit_09
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+;=====================================================
+TurnOnFrame	proc
+		push ax bx cx
+
+		mov ax, X_FRAME
+		call SkipStrings
+		mov di, Y_FRAME
+		sal di, 1d				; set es:[di]
+		mov bx, offset SAVE_BUF
+		mov cx, FRAME_WIDTH * FRAME_HEIGHT
+		call PrintFromMem			; VMEM -> SAVE
+
+		call UpdateFrame			; DRAW
+
+		mov ax, X_FRAME
+		call SkipStrings
+		mov di, Y_FRAME
+		sal di, 1d				; set es:[di]
+		mov bx, offset DRAW_BUF
+		mov cx, FRAME_WIDTH * FRAME_HEIGHT	; DRAW -> VMEM
+		call PrintToMem
+
+		pop cx bx ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+;=====================================================
+TurnOffFrame	proc
+		push ax bx cx dx es di
+
+		mov ax, X_FRAME
+		call SkipStrings
+		mov di, Y_FRAME
+		sal di, 1d				; set es:[di]
+		call SaveDiff				; VMEM - DRAW
+
+		mov ax, X_FRAME
+		call SkipStrings
+		mov di, Y_FRAME
+		sal di, 1d				; set es:[di]
+		mov bx, offset SAVE_BUF
+		mov cx, FRAME_WIDTH * FRAME_HEIGHT	; SAVE -> VMEM
+		call PrintToMem
+
+		pop di es dx cx bx ax
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+;=====================================================
+RedrawFrame	proc
+		push ax bx dx es di
+
+		mov ax, X_FRAME
+		call SkipStrings
+		mov di, Y_FRAME
+		sal di, 1d				; set es:[di]
+		call SaveDiff				; VMEM - DRAW
+
+		call UpdateFrame			; DRAW
+
+		mov ax, X_FRAME
+		call SkipStrings
+		mov di, Y_FRAME
+		sal di, 1d				; set es:[di]
+		mov bx, offset DRAW_BUF
+		mov cx, FRAME_WIDTH * FRAME_HEIGHT	; DRAW -> VMEM
+		call PrintToMem
+
+		pop di es dx bx ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	-
+;
+; Result:	in video memory printed ESC_SAVE[]
+;
+; Expected:	ES:[DI] = right shift and offset
+;
+; Destruction:	-
+;=====================================================
+SaveDiff	proc
+		push es ax cx bx si di
+
+		mov ax, FRAME_WIDTH
+		mov cx, FRAME_HEIGHT
+		mov bx, -1h
+
+  @@printing:
+		inc bx
+		push ax
+		mov al, es:[di]
+		cmp byte ptr [DRAW_BUF + bx], al
+		je @@cont
+		mov byte ptr [SAVE_BUF + bx], al
+
+	@@cont:
+		pop ax
+		dec ax
+		jne @@next
+		dec cx
+		je @@printed
+		mov ax, 1d
+		call ChangeString
+		mov ax, FRAME_WIDTH
+		pop di
+		push di
+		jmp @@printing
+
+	@@next:	inc di
+		jmp @@printing
+
+  @@printed:
+		pop di si bx cx ax es
+
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; Entry:	CX	= count of symbols, which will be printed
+;		BX	= index of string's begin
+;
+; Result:	string will be printed in VMEM
+;
+; Expected:	ES:[DI]	= right shift and offset
+;
+; Destruction:	BX, CX
+;=====================================================
+PrintToMem	proc
+		push ax es si di
+		mov si, di
+		add si, FRAME_WIDTH
+
+  @@loop:	mov al, cs:[bx]
+  		mov es:[di], al
+		inc bx
+		dec cx
+		je @@endPrint
+		inc di
+		cmp di, si
+		jne @@loop
+		mov ax, 1d
+		call ChangeString
+		pop di
+		push di
+		jmp @@loop
+
+  @@endPrint:
+		pop di si es ax
+		ret
+		endp
+;-----------------------------------------------------
+
+
+
+;=====================================================
+; The inverse PrintToMem function
+;=====================================================
+PrintFromMem	proc
+		push ax es si di
+		mov si, di
+		add si, FRAME_WIDTH
+
+  @@loop:	mov al, es:[di]
+  		mov cs:[bx], al
+		inc bx
+		dec cx
+		je @@endPrint
+		inc di
+		cmp di, si
+		jne @@loop
+		mov ax, 1d
+		call ChangeString
+		pop di
+		push di
+		jmp @@loop
+
+  @@endPrint:
+		pop di si es ax
 		ret
 		endp
 ;-----------------------------------------------------
@@ -279,121 +535,6 @@ PrintReg	proc 	value
 		pop dx
 		pop ax
 		pop bp
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-; Entry:	-
-;
-; Result:	in video memory printed ESC_SAVE[]
-;
-; Expected:	ES:[DI] = right shift and offset
-;
-; Destruction:	-
-;=====================================================
-SaveDiff	proc
-		push es ax cx bx si di
-
-		mov ax, FRAME_WIDTH
-		mov cx, FRAME_HEIGHT
-		mov bx, -1h
-
-  @@printing:
-		inc bx
-		push ax
-		mov al, es:[di]
-		cmp byte ptr [DRAW_BUF + bx], al
-		je @@cont
-		mov byte ptr [SAVE_BUF + bx], al
-
-	@@cont:
-		pop ax
-		dec ax
-		jne @@next
-		dec cx
-		je @@printed
-		mov ax, 1d
-		call ChangeString
-		mov ax, FRAME_WIDTH
-		pop di
-		push di
-		jmp @@printing
-
-	@@next:	inc di
-		jmp @@printing
-
-  @@printed:
-		pop di si bx cx ax es
-
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-; Entry:	CX	= count of symbols, which will be printed
-;		BX	= index of string's begin
-;
-; Result:	string will be printed in VMEM
-;
-; Expected:	ES:[DI]	= right shift and offset
-;
-; Destruction:	BX
-;=====================================================
-PrintToMem	proc
-		push ax es si di
-		mov si, di
-		add si, FRAME_WIDTH
-
-  @@loop:	mov al, cs:[bx]
-  		mov es:[di], al
-		inc bx
-		dec cx
-		je @@endPrint
-		inc di
-		cmp di, si
-		jne @@loop
-		mov ax, 1d
-		call ChangeString
-		pop di
-		push di
-		jmp @@loop
-
-  @@endPrint:
-		pop di si es ax
-		ret
-		endp
-;-----------------------------------------------------
-
-
-
-;=====================================================
-; The inverse PrintToMem function
-;=====================================================
-PrintFromMem	proc
-		push ax es si di
-		mov si, di
-		add si, FRAME_WIDTH
-
-  @@loop:	mov al, es:[di]
-  		mov cs:[bx], al
-		inc bx
-		dec cx
-		je @@endPrint
-		inc di
-		cmp di, si
-		jne @@loop
-		mov ax, 1d
-		call ChangeString
-		pop di
-		push di
-
-  @@endPrint:
-		pop di si es ax
 		ret
 		endp
 ;-----------------------------------------------------
@@ -500,6 +641,7 @@ DrawFrame	proc
 ;=====================================================
 RegSettings	proc
 
+		jmp @@regALL
 		cmp byte ptr [KEY_TYPE], ADX_KEY
 		je @@regADX
 		cmp byte ptr [KEY_TYPE], SEG_KEY
@@ -508,8 +650,7 @@ RegSettings	proc
 		je @@regIND
 		cmp byte ptr [KEY_TYPE], ALL_KEY
 		je @@regALL
-
-		jmp @@end
+		jmp @@regALL
 
 	@@regADX:
 		mov word ptr [REG_COUNT], 0ch
@@ -1127,11 +1268,12 @@ DS_VIEW  	db '³DS:', 4 DUP (0h), '³'
 ES_VIEW  	db '³ES:', 4 DUP (0h), '³'
 CS_VIEW  	db '³CS:', 4 DUP (0h), '³'
 IP_VIEW  	db '³IP:', 4 DUP (0h), '³'
-REG_COUNT	dw 0h
+REG_COUNT	dw 0ch
 
 KEY_TYPE	db ADX_KEY
 X_FRAME		dw 0h
 Y_FRAME		dw 0h
+IS_FRAME	db 0h
 
 SAVE_BUF	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
 DRAW_BUF	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
