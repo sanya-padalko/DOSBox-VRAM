@@ -89,8 +89,6 @@ start:		call DrawFrame
 		mov es:[bx + 2], ax
 		sti
 
-		int 08h
-
 		mov ax, 3100h
 		mov dx, offset Eoppp
 		shr dx, 4h
@@ -221,7 +219,21 @@ GetIp		proc
 ;=====================================================
 ProcessArrow	proc
 
-  arrow:	call TurnOffFrame
+
+  @@up:		dec X_FRAME
+		jmp @@back
+  @@dn:		inc X_FRAME
+		jmp @@back
+  @@left:	dec Y_FRAME
+		jmp @@back
+  @@right:	inc Y_FRAME
+		jmp @@back
+
+  arrow:
+  		cmp cs:[IS_FRAME], 1h
+		jne exit_09
+
+  		call TurnOffFrame
 		in al, 60h
 		cmp al, UP_ARR_KEY
 		je @@up
@@ -232,18 +244,8 @@ ProcessArrow	proc
 		cmp al, RT_ARR_KEY
 		je @@right
 
-		jmp @@arr
-
-  @@up:		dec X_FRAME
-		jmp @@arr
-  @@dn:		inc X_FRAME
-		jmp @@arr
-  @@left:	dec Y_FRAME
-		jmp @@arr
-  @@right:	inc Y_FRAME
-		jmp @@arr
-
-  @@arr:	call TurnOnFrame
+  @@back:
+		call TurnOnFrame
 		jmp exit_09
 
 		ret
@@ -1283,7 +1285,7 @@ REG_COUNT	dw 0ch
 KEY_TYPE	db ADX_KEY
 X_FRAME		dw 0h
 Y_FRAME		dw 0h
-IS_FRAME	db 1h
+IS_FRAME	db 0h
 
 SAVE_BUF	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
 DRAW_BUF	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
