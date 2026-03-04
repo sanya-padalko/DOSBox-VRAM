@@ -31,7 +31,6 @@ PRINT_REG_LEN	equ 9h
 
 FRAME_WIDTH	equ 26d
 FRAME_HEIGHT	equ 10h
-FRAME_TYPE	equ 0h
 
 FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
 		mov al, byte ptr cs:[bx]
@@ -56,7 +55,12 @@ locals @@
 ;
 ; Destruction:	AX, BX, ES, DI
 ;=====================================================
-start:		call DrawFrame
+start:		mov bx, 81h
+		call SkipSpaces
+		call GetNumber
+		mov FRAME_TYPE, ax		; setting FRAME_TYPE
+		
+		call DrawFrame
 		mov ax, cs
        		mov es, ax
 		mov di, offset Old09Ofs
@@ -193,7 +197,7 @@ New09		proc
 		out 20h, al
 
 		pop ax bx es ds
-    		db 0eah
+		db 0eah
 Old09Ofs	dw 0
 Old09Seg	dw 0
 
@@ -572,7 +576,7 @@ UpdateFrame	proc
 		;mov di, Y_FRAME
 		;sal di, 1d		; setting es:[di]
 
-		mov ax, FRAME_TYPE
+		mov ax, cs:[FRAME_TYPE]
 		mov bx, offset FRAME_TYPES
 		add bx, ax
 		sal ax, 4d
@@ -620,7 +624,7 @@ DrawFrame	proc
 		pop es
 		mov di, offset DRAW_BUF
 
-		mov ax, FRAME_TYPE
+		mov ax, cs:[FRAME_TYPE]
 		mov bx, offset FRAME_TYPES
 		add bx, ax
 		sal ax, 4d
@@ -1205,9 +1209,12 @@ GetNumber	proc
 		sub al, '0'
 		add si, 1h
 		cmp byte ptr [si], ' '
-		jne @@add_c
+		je @@enc
+		cmp byte ptr [si], 0dh
+		je @@enc
+		jmp @@add_c
 
-		mov bx, si
+	@@enc:	mov bx, si
 		jmp @@end
 
   @@not_num:	mov ah, 0h
@@ -1282,6 +1289,7 @@ CS_VIEW  	db '³CS:', 4 DUP (0h), '³'
 IP_VIEW  	db '³IP:', 4 DUP (0h), '³'
 REG_COUNT	dw 0ch
 
+FRAME_TYPE	dw 0h
 KEY_TYPE	db ADX_KEY
 X_FRAME		dw 0h
 Y_FRAME		dw 0h
