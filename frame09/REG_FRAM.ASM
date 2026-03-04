@@ -224,13 +224,21 @@ GetIp		proc
 ProcessArrow	proc
 
 
-  @@up:		dec X_FRAME
+  @@up:		cmp X_FRAME, -2h
+		je @@back
+		dec X_FRAME
 		jmp @@back
-  @@dn:		inc X_FRAME
+  @@dn:		cmp X_FRAME, 7h
+		je @@back
+		inc X_FRAME
 		jmp @@back
-  @@left:	dec Y_FRAME
+  @@left:	cmp Y_FRAME, 0h
+		je @@back
+		dec Y_FRAME
 		jmp @@back
-  @@right:	inc Y_FRAME
+  @@right:	cmp Y_FRAME, 43h
+		je @@back
+		inc Y_FRAME
 		jmp @@back
 
   arrow:
@@ -1292,7 +1300,7 @@ REG_COUNT	dw 0ch
 FRAME_TYPE	dw 0h
 KEY_TYPE	db ADX_KEY
 X_FRAME		dw 0h
-Y_FRAME		dw 0h
+Y_FRAME		dw 0bh
 IS_FRAME	db 0h
 
 SAVE_BUF	db (FRAME_WIDTH * FRAME_HEIGHT) DUP (0h)
