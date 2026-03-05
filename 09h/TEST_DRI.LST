@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    03/02/26 02:13:01	    Page 1
+Turbo Assembler	 Version 4.1	    03/05/26 15:42:57	    Page 1
 test_dri.asm
 
 
@@ -18,27 +18,40 @@ test_dri.asm
      13	0106  EB F8				     jmp @@first_loop
      14
      15	0108				     @@set:
-     16	0108  B0 00				     mov al, 0h
-     17	010A  B4 01				     mov ah, 1h
+     16	0108  54 1E				     push sp ds
+     17	010A  B4 FA				     mov ah, 0fah
      18	010C  BB 0200				     mov bx, 200h
      19	010F  B9 0300				     mov cx, 300h
      20	0112  BA 0400				     mov dx, 400h
-     21
-     22	0115			     @@looop:
-     23	0115  E4 60				     in	al, 60h
-     24	0117  3C 01				     cmp al, STOP_KEY
-     25	0119  74 02				     je	@@end_loop
-     26
-     27	011B  EB F8				     jmp @@looop
-     28
-     29	011D  E4 61		     @@end_loop:     in	al, 61h
-     30	011F  0C 80				     or	al, 80h
-     31	0121  E6 61				     out 61h, al
-     32	0123  24 7F				     and al, not 80h
-     33	0125  E6 61				     out 61h, al
-     34
-     35				     end start
-Turbo Assembler	 Version 4.1	    03/02/26 02:13:01	    Page 2
+     21	0115  50 55 8B EC C7 46	02+		     push 0abbah
+     22	      ABBA 5D
+     23	011F  1F				     pop ds
+     24	0120  B8 DADA				     mov ax, 0dadah
+     25	0123  8E C0				     mov es, ax
+     26	0125  BE EEEE				     mov si, 0eeeeh
+     27	0128  BF ACDC				     mov di, 0acdch
+     28	012B  BD 0EDA				     mov bp, 0edah
+     29	012E  BC 0DED				     mov sp, 0dedh
+     30
+     31	0131			     @@looop:
+     32	0131  E4 60				     in	al, 60h
+     33	0133  3C 01				     cmp al, STOP_KEY
+     34	0135  74 02				     je	@@end_loop
+     35	0137  EB F8				     jmp @@looop
+     36
+     37	0139  E4 61		     @@end_loop:     in	al, 61h
+     38	013B  0C 80				     or	al, 80h
+     39	013D  E6 61				     out 61h, al
+     40	013F  24 7F				     and al, not 80h
+     41	0141  E6 61				     out 61h, al
+     42
+     43	0143  1F 5C				     pop ds sp
+     44
+     45	0145  B8 4C00				     mov ax, 4c00h
+     46	0148  CD 21				     int 21h
+     47
+     48				     end start
+Turbo Assembler	 Version 4.1	    03/05/26 15:42:57	    Page 2
 Symbol Table
 
 
@@ -46,14 +59,14 @@ Symbol Table
 
 Symbol Name			  Type	 Value
 
-??DATE				  Text	 "03/02/26"
+??DATE				  Text	 "03/05/26"
 ??FILENAME			  Text	 "test_dri"
-??TIME				  Text	 "02:13:01"
+??TIME				  Text	 "15:42:57"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
-@@END_LOOP			  Near	 DGROUP:011D
+@@END_LOOP			  Near	 DGROUP:0139
 @@FIRST_LOOP			  Near	 DGROUP:0100
-@@LOOOP				  Near	 DGROUP:0115
+@@LOOOP				  Near	 DGROUP:0131
 @@SET				  Near	 DGROUP:0108
 @CODE				  Text	 DGROUP
 @CODESIZE			  Text	 0
@@ -74,5 +87,5 @@ Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  0127 Word	  Public  CODE
+  _TEXT				  16  014A Word	  Public  CODE
 

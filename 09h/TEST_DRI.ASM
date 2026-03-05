@@ -12,18 +12,25 @@ start:
 		je @@set
 		jmp @@first_loop
 
-	@@set:	
-		mov al, 0h
-		mov ah, 1h
+	@@set:
+		push sp ds
+		mov ah, 0fah
 		mov bx, 200h
 		mov cx, 300h
 		mov dx, 400h
+		push 0abbah
+		pop ds
+		mov ax, 0dadah
+		mov es, ax
+		mov si, 0eeeeh
+		mov di, 0acdch
+		mov bp, 0edah
+		mov sp, 0dedh
 
 @@looop:
 		in al, 60h
 		cmp al, STOP_KEY
 		je @@end_loop
-		
 		jmp @@looop
 
 @@end_loop:	in al, 61h
@@ -31,5 +38,10 @@ start:
 		out 61h, al
 		and al, not 80h
 		out 61h, al
+		
+		pop ds sp
+
+		mov ax, 4c00h
+		int 21h
 
 end start
