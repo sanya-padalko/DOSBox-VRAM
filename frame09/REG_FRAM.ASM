@@ -107,24 +107,20 @@ start:		mov bx, 81h
 ;=====================================================
 New08		proc
 
-		push ax bx cx dx es ds si di
-		push cs
-		pop ds
+  save_ip:	push sp ax bx cx dx es ds si di bp
 		cmp cs:[IS_FRAME], 1h
 		je @@redr
 		jmp @@noth
 
   @@redr:
-  		call GetIp
-  save_ip:	call SavingRegs
-		add sp, 1d * 2h
+  		call SavingRegs
 		call RedrawFrame
 
   @@noth:
 		mov al, 20h
 		out 20h, al
 
-		pop di si ds es dx cx bx ax
+		pop bp di si ds es dx cx bx ax sp
 		db 0eah
 Old08Ofs	dw 0
 Old08Seg	dw 0
@@ -494,15 +490,18 @@ SavingRegs	proc
 		REG_PRINT si
 		REG_PRINT di
 		REG_PRINT bp
-		mov ax, sp
+		push bp
+		mov bp, sp
+		mov ax, ss:[bp + 2h * 0dh]
 		add ax, 3d * 2h
+		pop bp
 		REG_PRINT ax
 		REG_PRINT ds
 		REG_PRINT es
 		REG_PRINT cs
 		push bp
 		mov bp, sp
-		mov ax, [bp + 8]
+		mov ax, ss:[bp + 2h * 0eh]
 		sub ax, 3d		; intstr. call size
 		pop bp
 		REG_PRINT ax
