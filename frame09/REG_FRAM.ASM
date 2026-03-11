@@ -59,7 +59,7 @@ start:		mov bx, 81h
 		call SkipSpaces
 		call GetNumber
 		mov FRAME_TYPE, ax		; setting FRAME_TYPE
-		
+
 		call DrawFrame
 		mov ax, cs
        		mov es, ax
@@ -116,11 +116,7 @@ New08		proc
   		call SavingRegs
 		call RedrawFrame
 
-  @@noth:
-		mov al, 20h
-		out 20h, al
-
-		pop bp di si ds es dx cx bx ax sp
+  @@noth:	pop bp di si ds es dx cx bx ax sp
 		db 0eah
 Old08Ofs	dw 0
 Old08Seg	dw 0
@@ -153,17 +149,16 @@ New09		proc
   		mov [KEY_TYPE], al
   		cmp IS_FRAME, 0h
 		je @@onfr
-		jmp exit_09
-
+		jmp not_s
   @@onfr:
   		call TurnOnFrame
 		mov IS_FRAME, 1h
-		jmp exit_09
+		jmp not_s
 
   @@offfr:
   		call TurnOffFrame
 		mov IS_FRAME, 0h
-		jmp exit_09
+		jmp not_s
 
   @@check:
   		in al, 60h
@@ -179,20 +174,21 @@ New09		proc
 		je arrow
 		cmp al, RT_ARR_KEY
 		je arrow
-		jmp @@not_s
+		jmp exit_09
 
-  exit_09:
+  not_s:
   		in al, 61h
 		and al, not 80h
 		out 61h, al
 		or al, 80h
 		out 61h, al
 
-  @@not_s:
   		mov al, 20h
 		out 20h, al
-
 		pop ax bx es ds
+		iret
+
+  exit_09:	pop ax bx es ds
 		db 0eah
 Old09Ofs	dw 0
 Old09Seg	dw 0
@@ -254,7 +250,7 @@ ProcessArrow	proc
 
   @@back:
 		call TurnOnFrame
-		jmp exit_09
+		jmp not_s
 
 		ret
 		endp
@@ -322,16 +318,19 @@ TurnOffFrame	proc
 ;=====================================================
 ;=====================================================
 RedrawFrame	proc
-		push ax bx dx es di
+		push ax bx dx es
 
+		push di
 		mov ax, word ptr cs:[X_FRAME]
 		call SkipStrings
 		mov di, word ptr cs:[Y_FRAME]
 		sal di, 1d				; set es:[di]
 		call SaveDiff				; VMEM - DRAW
+		pop di
 
 		call UpdateFrame			; DRAW
 
+		push di
 		mov ax, word ptr cs:[X_FRAME]
 		call SkipStrings
 		mov di, word ptr cs:[Y_FRAME]
@@ -339,8 +338,9 @@ RedrawFrame	proc
 		mov bx, offset DRAW_BUF
 		mov cx, FRAME_WIDTH * FRAME_HEIGHT	; DRAW -> VMEM
 		call PrintToMem
+		pop di
 
-		pop di es dx bx ax
+		pop es dx bx ax
 		ret
 		endp
 ;-----------------------------------------------------
@@ -528,38 +528,28 @@ PrintReg	proc 	value
 		push bp
 		mov bp, sp
 
-		push ax
-		push dx
+		push ax bx cx si
+		mov si, bx
+		add si, 7h
 		mov ax, value
-		mov dh, 4h
-		add bx, 7h
+		mov cx, 4h
+		mov bh, 0h
 
-	@@digit:
-		mov dl, al
-		and dl, 0fh
-		cmp dl, 0ah
-		jnl @@ab_9
-
-		add dl, NULL_CODE
-		jmp @@com_part
-	@@ab_9:
-		add dl, ALPH_ADD_CODE
-@@com_part:
-		mov byte ptr cs:[bx], dl
+	@@print_dig:
+		mov bl, al
+		and bx, 000fh
+		mov bh, byte ptr cs:[HEX_ALPHAVITE + bx]
+		mov byte ptr cs:[si], bh
 		shr ax, 4h
-		dec bx
-		dec dh
-		jne @@digit
+		dec si
+		loop @@print_dig
 
-		add bx, -3h
-		pop dx
-		pop ax
-		pop bp
+		pop si cx bx ax bp
 		ret
 		endp
 ;-----------------------------------------------------
 
-
+HEX_ALPHAVITE	db '0123456789ABCDEF'
 
 ;=====================================================
 ;=====================================================
@@ -1278,7 +1268,7 @@ Exit		proc
 FRAME_TYPES	db 'ÄÄ/\\/³Ã´ÄÄÚ¿ÀÙÄÄ'
 		db '²²²²²²²²²°°°°°°²²'
 		db 'ûûûûûûûûû        '
-		db '±±±±±±±±±', 1eh, 1fh, 4 DUP(09h), 'ÎÎ'
+		db '±±±±±±±±±', 1eh, 1fh, 4 DUP(09h), 'ÎÎ', 200 DUP(0h)
 
 AX_VIEW  	db '³AX:', 4 DUP (0h), '³'
 BX_VIEW  	db '³BX:', 4 DUP (0h), '³'
