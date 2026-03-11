@@ -16,7 +16,9 @@ start:
 		pop ds
 		mov ax, 0deadh
 		mov es, ax
-		mov ah, 11h
+		mov ax, 0c0ffh
+		mov ss, ax
+		mov ax, 1111h
 
 @@looop:
 		in al, 60h

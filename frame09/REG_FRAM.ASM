@@ -30,7 +30,7 @@ RT_ARR_KEY	equ 4dh
 PRINT_REG_LEN	equ 9h
 
 FRAME_WIDTH	equ 26d
-FRAME_HEIGHT	equ 10h
+FRAME_HEIGHT	equ 11h
 
 FRAME_LODSB	macro		; AL = next frame symbol, and increase BX
 		mov al, byte ptr cs:[bx]
@@ -140,7 +140,7 @@ Old08Seg	dw 0
 ;=====================================================
 New09		proc
 
-		push ds es bx ax
+		push ds es bx ax di
 		push cs
 		pop ds
 		jmp @@check
@@ -185,10 +185,10 @@ New09		proc
 
   		mov al, 20h
 		out 20h, al
-		pop ax bx es ds
+		pop di ax bx es ds
 		iret
 
-  exit_09:	pop ax bx es ds
+  exit_09:	pop di ax bx es ds
 		db 0eah
 Old09Ofs	dw 0
 Old09Seg	dw 0
@@ -220,7 +220,7 @@ ProcessArrow	proc
 		je @@back
 		dec X_FRAME
 		jmp @@back
-  @@dn:		cmp X_FRAME, 7h
+  @@dn:		cmp X_FRAME, 6h
 		je @@back
 		inc X_FRAME
 		jmp @@back
@@ -498,6 +498,7 @@ SavingRegs	proc
 		REG_PRINT ax
 		REG_PRINT ds
 		REG_PRINT es
+		REG_PRINT ss
 		REG_PRINT cs
 		push bp
 		mov bp, sp
@@ -663,7 +664,7 @@ RegSettings	proc
 		jmp @@regALL
 
 	@@regADX:
-		mov word ptr cs:[REG_COUNT], 0ch
+		mov word ptr cs:[REG_COUNT], 0dh
 		mov bx, offset AX_VIEW
 		jmp @@end
 
@@ -678,7 +679,7 @@ RegSettings	proc
 		jmp @@end
 
 	@@regALL:
-		mov word ptr cs:[REG_COUNT], 0ch
+		mov word ptr cs:[REG_COUNT], 0dh
 		mov bx, offset AX_VIEW
 
 @@end:		ret
@@ -1282,9 +1283,10 @@ SP_VIEW  	db '³SP:', 4 DUP (0h), '³'
 
 DS_VIEW  	db '³DS:', 4 DUP (0h), '³'
 ES_VIEW  	db '³ES:', 4 DUP (0h), '³'
+SS_VIEW		db '³SS:', 4 DUP (0h), '³'
 CS_VIEW  	db '³CS:', 4 DUP (0h), '³'
 IP_VIEW  	db '³IP:', 4 DUP (0h), '³'
-REG_COUNT	dw 0ch
+REG_COUNT	dw 0dh
 
 FRAME_TYPE	dw 0h
 KEY_TYPE	db ADX_KEY

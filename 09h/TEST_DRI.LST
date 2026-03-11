@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    03/11/26 11:48:22	    Page 1
+Turbo Assembler	 Version 4.1	    03/11/26 20:45:54	    Page 1
 test_dri.asm
 
 
@@ -22,20 +22,22 @@ test_dri.asm
      17	011F  1F				     pop ds
      18	0120  B8 DEAD				     mov ax, 0deadh
      19	0123  8E C0				     mov es, ax
-     20	0125  B4 11				     mov ah, 11h
-     21
-     22	0127			     @@looop:
-     23	0127  E4 60				     in	al, 60h
-     24	0129  3C 01				     cmp al, STOP_KEY
-     25	012B  74 04				     je	@@end_loop
-     26	012D  B0 11				     mov al, 11h
-     27	012F  EB F6				     jmp @@looop
-     28
-     29	0131  B8 4C00		     @@end_loop:     mov ax, 4c00h
-     30	0134  CD 21				     int 21h
-     31
-     32				     end start
-Turbo Assembler	 Version 4.1	    03/11/26 11:48:22	    Page 2
+     20	0125  B8 C0FF				     mov ax, 0c0ffh
+     21	0128  8E D0				     mov ss, ax
+     22	012A  B4 11				     mov ah, 11h
+     23
+     24	012C			     @@looop:
+     25	012C  E4 60				     in	al, 60h
+     26	012E  3C 01				     cmp al, STOP_KEY
+     27	0130  74 04				     je	@@end_loop
+     28	0132  B0 11				     mov al, 11h
+     29	0134  EB F6				     jmp @@looop
+     30
+     31	0136  B8 4C00		     @@end_loop:     mov ax, 4c00h
+     32	0139  CD 21				     int 21h
+     33
+     34				     end start
+Turbo Assembler	 Version 4.1	    03/11/26 20:45:54	    Page 2
 Symbol Table
 
 
@@ -45,11 +47,11 @@ Symbol Name			  Type	 Value
 
 ??DATE				  Text	 "03/11/26"
 ??FILENAME			  Text	 "test_dri"
-??TIME				  Text	 "11:48:22"
+??TIME				  Text	 "20:45:54"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
-@@END_LOOP			  Near	 DGROUP:0131
-@@LOOOP				  Near	 DGROUP:0127
+@@END_LOOP			  Near	 DGROUP:0136
+@@LOOOP				  Near	 DGROUP:012C
 @CODE				  Text	 DGROUP
 @CODESIZE			  Text	 0
 @CPU				  Text	 0101H
@@ -68,5 +70,5 @@ Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  0136 Word	  Public  CODE
+  _TEXT				  16  013B Word	  Public  CODE
 
