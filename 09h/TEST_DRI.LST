@@ -1,4 +1,4 @@
-Turbo Assembler	 Version 4.1	    03/05/26 15:42:57	    Page 1
+Turbo Assembler	 Version 4.1	    03/11/26 11:48:22	    Page 1
 test_dri.asm
 
 
@@ -7,51 +7,35 @@ test_dri.asm
       2	0000			     .code
       3				     org 100h
       4
-      5	      =0025		     START_KEY	     equ 25h
-      6	      =0001		     STOP_KEY	     equ 01h
-      7
-      8	0100			     start:
-      9	0100			       @@first_loop:
-     10	0100  E4 60				     in	al, 60h
-     11	0102  3C 25				     cmp al, START_KEY
-     12	0104  74 02				     je	@@set
-     13	0106  EB F8				     jmp @@first_loop
-     14
-     15	0108				     @@set:
-     16	0108  54 1E				     push sp ds
-     17	010A  B4 FA				     mov ah, 0fah
-     18	010C  BB 0200				     mov bx, 200h
-     19	010F  B9 0300				     mov cx, 300h
-     20	0112  BA 0400				     mov dx, 400h
-     21	0115  50 55 8B EC C7 46	02+		     push 0abbah
-     22	      ABBA 5D
-     23	011F  1F				     pop ds
-     24	0120  B8 DADA				     mov ax, 0dadah
-     25	0123  8E C0				     mov es, ax
-     26	0125  BE EEEE				     mov si, 0eeeeh
-     27	0128  BF ACDC				     mov di, 0acdch
-     28	012B  BD 0EDA				     mov bp, 0edah
-     29	012E  BC 0DED				     mov sp, 0dedh
-     30
-     31	0131			     @@looop:
-     32	0131  E4 60				     in	al, 60h
-     33	0133  3C 01				     cmp al, STOP_KEY
-     34	0135  74 02				     je	@@end_loop
-     35	0137  EB F8				     jmp @@looop
-     36
-     37	0139  E4 61		     @@end_loop:     in	al, 61h
-     38	013B  0C 80				     or	al, 80h
-     39	013D  E6 61				     out 61h, al
-     40	013F  24 7F				     and al, not 80h
-     41	0141  E6 61				     out 61h, al
-     42
-     43	0143  1F 5C				     pop ds sp
-     44
-     45	0145  B8 4C00				     mov ax, 4c00h
-     46	0148  CD 21				     int 21h
-     47
-     48				     end start
-Turbo Assembler	 Version 4.1	    03/05/26 15:42:57	    Page 2
+      5	      =0001		     STOP_KEY	     equ 01h
+      6
+      7	0100			     start:
+      8	0100  BB 2222				     mov bx, 2222h
+      9	0103  B9 3333				     mov cx, 3333h
+     10	0106  BA 4444				     mov dx, 4444h
+     11	0109  BE 5555				     mov si, 5555h
+     12	010C  BF 6666				     mov di, 6666h
+     13	010F  BD 7777				     mov bp, 7777h
+     14	0112  BC 8888				     mov sp, 8888h
+     15	0115  50 55 8B EC C7 46	02+		     push 9999h
+     16	      9999 5D
+     17	011F  1F				     pop ds
+     18	0120  B8 DEAD				     mov ax, 0deadh
+     19	0123  8E C0				     mov es, ax
+     20	0125  B4 11				     mov ah, 11h
+     21
+     22	0127			     @@looop:
+     23	0127  E4 60				     in	al, 60h
+     24	0129  3C 01				     cmp al, STOP_KEY
+     25	012B  74 04				     je	@@end_loop
+     26	012D  B0 11				     mov al, 11h
+     27	012F  EB F6				     jmp @@looop
+     28
+     29	0131  B8 4C00		     @@end_loop:     mov ax, 4c00h
+     30	0134  CD 21				     int 21h
+     31
+     32				     end start
+Turbo Assembler	 Version 4.1	    03/11/26 11:48:22	    Page 2
 Symbol Table
 
 
@@ -59,15 +43,13 @@ Symbol Table
 
 Symbol Name			  Type	 Value
 
-??DATE				  Text	 "03/05/26"
+??DATE				  Text	 "03/11/26"
 ??FILENAME			  Text	 "test_dri"
-??TIME				  Text	 "15:42:57"
+??TIME				  Text	 "11:48:22"
 ??VERSION			  Number 040A
 @32BIT				  Text	 0
-@@END_LOOP			  Near	 DGROUP:0139
-@@FIRST_LOOP			  Near	 DGROUP:0100
-@@LOOOP				  Near	 DGROUP:0131
-@@SET				  Near	 DGROUP:0108
+@@END_LOOP			  Near	 DGROUP:0131
+@@LOOOP				  Near	 DGROUP:0127
 @CODE				  Text	 DGROUP
 @CODESIZE			  Text	 0
 @CPU				  Text	 0101H
@@ -80,12 +62,11 @@ Symbol Name			  Type	 Value
 @STACK				  Text	 DGROUP
 @WORDSIZE			  Text	 2
 START				  Near	 DGROUP:0100
-START_KEY			  Number 0025
 STOP_KEY			  Number 0001
 
 Groups & Segments		  Bit Size Align  Combine Class
 
 DGROUP				  Group
   _DATA				  16  0000 Word	  Public  DATA
-  _TEXT				  16  014A Word	  Public  CODE
+  _TEXT				  16  0136 Word	  Public  CODE
 
