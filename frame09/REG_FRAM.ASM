@@ -477,6 +477,7 @@ SavingRegs	proc
 		push ax
 		push bx
 		mov bx, offset AX_VIEW
+		add bx, 4h
 		push ax
 		call PrintReg
 		pop ax
@@ -531,7 +532,7 @@ PrintReg	proc 	value
 
 		push ax bx cx si
 		mov si, bx
-		add si, 7h
+		add si, 3h
 		mov ax, value
 		mov cx, 4h
 		mov bh, 0h
